@@ -86,7 +86,7 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
           x: pos.x, y: pos.y, width: 200, height: 40,
           text: 'Type here…',
           fontSize: drawingDefaults.fontSize,
-          fontFamily: 'sans-serif',
+          fontFamily: drawingDefaults.fontFamily,
           fontColor: drawingDefaults.fontColor,
           fontBold: false, fontItalic: false,
           align: 'left', backgroundColor: null,
@@ -344,15 +344,17 @@ function buildAnnotation(
   d: DrawingDefaults,
 ): Annotation | null {
   const base = { id, pageIndex, x, y, width: 0, height: 0, opacity: 1, visible: true }
+  const strokeColor = d.strokeNone ? 'transparent' : d.strokeColor
+  const strokeWidth = d.strokeNone ? 0 : d.strokeWidth
   switch (tool) {
     case Tool.RECT:
-      return { ...base, type: 'rect', fillColor: d.fillColor, strokeColor: d.strokeColor, strokeWidth: d.strokeWidth, cornerRadius: 0 }
+      return { ...base, type: 'rect', fillColor: d.fillColor, strokeColor, strokeWidth, cornerRadius: 0 }
     case Tool.ELLIPSE:
-      return { ...base, type: 'ellipse', fillColor: d.fillColor, strokeColor: d.strokeColor, strokeWidth: d.strokeWidth }
+      return { ...base, type: 'ellipse', fillColor: d.fillColor, strokeColor, strokeWidth }
     case Tool.LINE:
-      return { ...base, type: 'line', points: [x, y, x, y], strokeColor: d.strokeColor, strokeWidth: d.strokeWidth }
+      return { ...base, type: 'line', points: [x, y, x, y], strokeColor, strokeWidth }
     case Tool.ARROW:
-      return { ...base, type: 'arrow', points: [x, y, x, y], strokeColor: d.strokeColor, strokeWidth: d.strokeWidth }
+      return { ...base, type: 'arrow', points: [x, y, x, y], strokeColor, strokeWidth }
     case Tool.HIGHLIGHT:
       return { ...base, type: 'highlight', fillColor: d.highlightColor, opacity: 0.45 }
     case Tool.REDACT:

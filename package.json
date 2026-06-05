@@ -22,6 +22,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@tanstack/react-virtual": "^3.13.9",
     "clsx": "^2.1.1",
+    "docx": "^9.7.1",
     "immer": "^10.1.1",
     "konva": "^9.3.20",
     "lucide-react": "^0.513.0",

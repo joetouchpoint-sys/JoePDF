@@ -3,9 +3,11 @@ import { Tool } from '@/types/tool'
 
 export interface DrawingDefaults {
   strokeColor: string
+  strokeNone: boolean
   fillColor: string | null
   strokeWidth: number
   fontSize: number
+  fontFamily: string
   fontColor: string
   highlightColor: string
 }
@@ -45,12 +47,14 @@ export interface UISlice {
 }
 
 const initialDrawingDefaults: DrawingDefaults = {
-  strokeColor: '#1d4ed8',
+  strokeColor: '#178351',   // Family Action green
+  strokeNone: false,
   fillColor: null,
   strokeWidth: 2,
   fontSize: 16,
-  fontColor: '#1e293b',
-  highlightColor: '#fde047',
+  fontFamily: 'DM Sans',
+  fontColor: '#292C4F',     // Navy blue
+  highlightColor: '#A0DA00', // Lime green
 }
 
 const initialUI = {

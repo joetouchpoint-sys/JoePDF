@@ -12,8 +12,12 @@ interface PDFTextLayerProps {
 
 /**
  * Renders an invisible but selectable text layer over the PDF canvas.
- * Uses PDF.js getTextContent() + Util.transform to position each text span
- * exactly over the corresponding canvas text.
+ *
+ * Coordinate note: PDF.js viewport.transform already accounts for the Y-flip
+ * (PDF bottom-left → screen top-left). After Util.transform, tx[4]/tx[5] are
+ * correct screen-space coordinates. We must NOT re-apply the Y flip in the CSS
+ * matrix — instead we extract just the rotation angle and use plain font-size +
+ * top/left positioning, which avoids the upside-down text bug.
  */
 export function PDFTextLayer({ page, scale, width, height, interactive }: PDFTextLayerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -30,30 +34,42 @@ export function PDFTextLayer({ page, scale, width, height, interactive }: PDFTex
       if (cancelled || !container) return
 
       for (const item of textContent.items) {
-        if (!('str' in item) || !item.str) continue
+        if (!('str' in item) || !item.str.trim()) continue
 
-        // Transform from PDF user-space to canvas/viewport coordinates
+        // Combine the viewport transform with the text item transform.
+        // viewport.transform = [scale, 0, 0, -scale, 0, pageHeightPx]
+        // After multiplication, tx[4]/tx[5] are the baseline position in screen px.
         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform)
 
-        // Font height from the matrix scale components
+        // Font height: use the Y-axis column of the matrix (tx[2], tx[3]).
+        // For upright text tx[3] = -fontHeight (negative because of Y-flip).
+        // sqrt gives the absolute magnitude regardless of sign.
         const fontHeight = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3])
-        if (fontHeight < 1) continue
+        if (fontHeight < 2) continue
+
+        // Rotation angle from the X-axis column (tx[0], tx[1]).
+        // Negate to convert from PDF-space rotation to CSS-space rotation.
+        const angle = Math.atan2(tx[1], tx[0])
 
         const span = document.createElement('span')
         span.textContent = item.str
 
-        // Position using CSS matrix transform. tx[4] = x offset, tx[5] = y offset.
-        // Subtract fontHeight * 0.8 to align baseline (PDF origin is at text baseline).
+        // tx[5] is the baseline Y in screen px (already flipped by viewport).
+        // CSS `top` positions the TOP of the element, so subtract fontHeight to
+        // align the element's bottom edge (≈ baseline) with tx[5].
+        // transform-origin: 0 100% means rotate around the bottom-left corner
+        // so the baseline anchor stays fixed during rotation.
         span.style.cssText = `
           position: absolute;
-          left: 0;
-          top: 0;
-          transform: matrix(${tx[0]}, ${tx[1]}, ${tx[2]}, ${tx[3]}, ${tx[4]}, ${tx[5] - fontHeight * 0.8});
-          transform-origin: 0 0;
-          white-space: pre;
+          left: ${tx[4]}px;
+          top: ${tx[5] - fontHeight}px;
           font-size: ${fontHeight}px;
+          transform: rotate(${-angle}rad);
+          transform-origin: 0 100%;
+          white-space: pre;
           line-height: 1;
           color: transparent;
+          cursor: text;
         `
 
         container.appendChild(span)
@@ -74,14 +90,10 @@ export function PDFTextLayer({ page, scale, width, height, interactive }: PDFTex
         width,
         height,
         overflow: 'hidden',
-        // When interactive: z-index above Konva canvas so text can be selected
-        // When not interactive: z-index below so Konva handles events
         zIndex: interactive ? 20 : 1,
         pointerEvents: interactive ? 'auto' : 'none',
         userSelect: interactive ? 'text' : 'none',
-        cursor: interactive ? 'text' : 'default',
-        // Subtle highlight when in text-select mode
-        background: interactive ? 'rgba(251,191,36,0.05)' : 'transparent',
+        background: interactive ? 'rgba(160,218,0,0.06)' : 'transparent',
       }}
     />
   )

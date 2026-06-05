@@ -11,12 +11,12 @@ export interface BrandingConfig {
 }
 
 export const DEFAULT_BRANDING: BrandingConfig = {
-  orgName: 'Your Organisation',
+  orgName: 'Family Action',
   appName: 'JoePDF',
   logoDataUrl: null,
-  primaryColor: '#1d4ed8',
-  secondaryColor: '#1e40af',
-  accentColor: '#3b82f6',
+  primaryColor: '#178351',   // Family Action Green
+  secondaryColor: '#292C4F', // Navy Blue
+  accentColor: '#A0DA00',    // Lime Green
   footerText: '',
   supportEmail: '',
   privacyNotice: '',

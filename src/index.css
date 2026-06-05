@@ -1,12 +1,15 @@
+/* Google Fonts — DM Sans (body) + Nunito (headline, closest open-source to VAG Rounded Bold) */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Nunito:wght@700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --color-primary: #1d4ed8;
-    --color-secondary: #1e40af;
-    --color-accent: #3b82f6;
+    --color-primary: #178351;    /* Family Action Green */
+    --color-secondary: #292C4F;  /* Navy Blue */
+    --color-accent: #A0DA00;     /* Lime Green */
   }
 
   *,
@@ -25,38 +28,29 @@
   }
 
   body {
-    font-family: Inter, system-ui, sans-serif;
+    font-family: 'DM Sans', Inter, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     background-color: #f8fafc;
-    color: #1e293b;
+    color: #292C4F;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Nunito', 'VAG Rounded', system-ui, sans-serif;
+    font-weight: 700;
   }
 }
 
-/* PDF.js text layer — invisible but selectable when text-select mode is on */
-.pdfTextLayer {
-  line-height: 1;
-}
-
-.pdfTextLayer > span {
+/* PDF.js text layer — transparent but selectable in text-select mode */
+.pdfTextLayer span {
   position: absolute;
   white-space: pre;
   cursor: text;
-  transform-origin: 0% 0%;
-  /* Transparent but still selectable */
+  transform-origin: 0 100%;
+}
+
+.pdfTextLayer span::selection {
+  background: rgba(23, 131, 81, 0.3); /* Family Action green selection */
   color: transparent;
-}
-
-.pdfTextLayer ::selection {
-  background: rgba(29, 78, 216, 0.25);
-}
-
-/* Hint overlay shown when text-select mode is active */
-.pdfTextLayer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(251, 191, 36, 0.06);
-  pointer-events: none;
 }
 
 @layer utilities {
@@ -81,5 +75,10 @@
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+
+  .font-headline {
+    font-family: 'Nunito', 'VAG Rounded', system-ui, sans-serif;
+    font-weight: 700;
   }
 }

@@ -2,10 +2,18 @@ import { useStore } from '@/store'
 import { Tool } from '@/types/tool'
 import { clsx } from 'clsx'
 
-
-
 const STROKE_WIDTHS = [1, 2, 3, 5, 8]
-const FONT_SIZES = [10, 12, 14, 16, 20, 24, 32, 48]
+const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
+const FONT_FAMILIES = [
+  'DM Sans',
+  'Arial',
+  'Helvetica',
+  'Georgia',
+  'Times New Roman',
+  'Trebuchet MS',
+  'Verdana',
+  'Courier New',
+]
 
 export function DrawingOptionsBar() {
   const activeTool = useStore((s) => s.ui.activeTool)
@@ -21,122 +29,145 @@ export function DrawingOptionsBar() {
 
   if (!isDrawing) return null
 
-  const handleColor = (key: 'strokeColor' | 'fillColor' | 'fontColor' | 'highlightColor', val: string) => {
-    if (val === 'none') {
-      if (key === 'fillColor') setDefaults({ fillColor: null })
-    } else {
-      setDefaults({ [key]: val })
-    }
-  }
-
   return (
-    <div className="flex items-center gap-4 px-3 h-9 border-b border-slate-100 bg-slate-50 text-sm flex-shrink-0 overflow-x-auto">
+    <div className="flex items-center gap-3 px-3 h-10 border-b border-slate-200 bg-white text-sm flex-shrink-0 overflow-x-auto">
+
+      {/* Stroke colour + none toggle — shapes, lines, freehand */}
       {(isShapeTool || isLineTool || isFreehand) && (
-        <label className="flex items-center gap-1.5">
-          <span className="text-xs text-slate-500 whitespace-nowrap">Stroke</span>
+        <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
+          <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Stroke</legend>
           <input
             type="color"
-            value={defaults.strokeColor}
-            onChange={(e) => handleColor('strokeColor', e.target.value)}
-            className="w-6 h-6 rounded border border-slate-300 cursor-pointer"
+            value={defaults.strokeNone ? '#cccccc' : defaults.strokeColor}
+            onChange={(e) => setDefaults({ strokeColor: e.target.value, strokeNone: false })}
+            disabled={defaults.strokeNone}
+            className="w-6 h-6 rounded border border-slate-300 cursor-pointer disabled:opacity-40"
+            title="Stroke colour"
           />
-        </label>
+          <button
+            type="button"
+            onClick={() => setDefaults({ strokeNone: !defaults.strokeNone })}
+            className={clsx(
+              'text-[10px] leading-none px-1.5 py-1 rounded border transition-colors whitespace-nowrap',
+              defaults.strokeNone
+                ? 'border-[--color-primary] bg-green-50 text-[--color-primary] font-medium'
+                : 'border-slate-200 text-slate-400 hover:border-slate-400',
+            )}
+            title="No stroke"
+          >
+            None
+          </button>
+        </fieldset>
       )}
 
+      {/* Fill colour + none toggle — shapes only */}
       {isShapeTool && (
-        <label className="flex items-center gap-1.5">
-          <span className="text-xs text-slate-500 whitespace-nowrap">Fill</span>
-          <div className="relative flex items-center gap-1">
-            <input
-              type="color"
-              value={defaults.fillColor ?? '#ffffff'}
-              onChange={(e) => handleColor('fillColor', e.target.value)}
-              className="w-6 h-6 rounded border border-slate-300 cursor-pointer"
-            />
+        <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
+          <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Fill</legend>
+          <input
+            type="color"
+            value={defaults.fillColor ?? '#ffffff'}
+            onChange={(e) => setDefaults({ fillColor: e.target.value })}
+            disabled={defaults.fillColor === null}
+            className="w-6 h-6 rounded border border-slate-300 cursor-pointer disabled:opacity-40"
+            title="Fill colour"
+          />
+          <button
+            type="button"
+            onClick={() => setDefaults({ fillColor: defaults.fillColor === null ? '#ffffff' : null })}
+            className={clsx(
+              'text-[10px] leading-none px-1.5 py-1 rounded border transition-colors whitespace-nowrap',
+              defaults.fillColor === null
+                ? 'border-[--color-primary] bg-green-50 text-[--color-primary] font-medium'
+                : 'border-slate-200 text-slate-400 hover:border-slate-400',
+            )}
+            title="No fill"
+          >
+            None
+          </button>
+        </fieldset>
+      )}
+
+      {/* Stroke width buttons */}
+      {(isShapeTool || isLineTool || isFreehand) && !defaults.strokeNone && (
+        <fieldset className="flex items-center gap-1 border-0 p-0 m-0">
+          <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Width</legend>
+          {STROKE_WIDTHS.map((w) => (
             <button
+              key={w}
               type="button"
-              onClick={() => setDefaults({ fillColor: null })}
-              title="No fill"
+              onClick={() => setDefaults({ strokeWidth: w })}
+              aria-label={`${w}px stroke`}
               className={clsx(
-                'text-[10px] leading-none px-1 py-0.5 rounded border transition-colors',
-                defaults.fillColor === null
-                  ? 'border-[--color-primary] bg-blue-50 text-[--color-primary]'
-                  : 'border-slate-200 text-slate-400 hover:border-slate-400',
+                'rounded flex items-center justify-center w-7 h-6 transition-colors border',
+                defaults.strokeWidth === w
+                  ? 'border-[--color-primary] bg-green-50'
+                  : 'border-slate-200 hover:border-slate-400',
               )}
             >
-              None
+              <div
+                className="rounded-full bg-slate-600"
+                style={{ width: Math.min(w * 3, 20), height: w }}
+              />
             </button>
-          </div>
-        </label>
+          ))}
+        </fieldset>
       )}
 
-      {(isShapeTool || isLineTool || isFreehand) && (
-        <label className="flex items-center gap-1.5">
-          <span className="text-xs text-slate-500 whitespace-nowrap">Width</span>
-          <div className="flex items-center gap-1">
-            {STROKE_WIDTHS.map((w) => (
-              <button
-                key={w}
-                type="button"
-                onClick={() => setDefaults({ strokeWidth: w })}
-                aria-label={`Stroke width ${w}px`}
-                className={clsx(
-                  'rounded flex items-center justify-center w-7 h-6 transition-colors border',
-                  defaults.strokeWidth === w
-                    ? 'border-[--color-primary] bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-400',
-                )}
-              >
-                <div
-                  className="rounded-full bg-slate-700"
-                  style={{ width: Math.min(w * 3, 20), height: w }}
-                />
-              </button>
-            ))}
-          </div>
-        </label>
-      )}
-
+      {/* Text tool options */}
       {isTextTool && (
         <>
-          <label className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500 whitespace-nowrap">Colour</span>
-            <input
-              type="color"
-              value={defaults.fontColor}
-              onChange={(e) => handleColor('fontColor', e.target.value)}
-              className="w-6 h-6 rounded border border-slate-300 cursor-pointer"
-            />
-          </label>
-          <label className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500 whitespace-nowrap">Size</span>
+          <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
+            <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Font</legend>
+            <select
+              value={defaults.fontFamily}
+              onChange={(e) => setDefaults({ fontFamily: e.target.value })}
+              className="text-xs border border-slate-200 rounded px-1.5 py-1 bg-white max-w-[110px]"
+            >
+              {FONT_FAMILIES.map((f) => (
+                <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+              ))}
+            </select>
+          </fieldset>
+          <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
+            <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Size</legend>
             <select
               value={defaults.fontSize}
               onChange={(e) => setDefaults({ fontSize: Number(e.target.value) })}
-              className="text-xs border border-slate-200 rounded px-1 py-0.5 bg-white"
+              className="text-xs border border-slate-200 rounded px-1.5 py-1 bg-white w-14"
             >
               {FONT_SIZES.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-          </label>
+          </fieldset>
+          <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
+            <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Colour</legend>
+            <input
+              type="color"
+              value={defaults.fontColor}
+              onChange={(e) => setDefaults({ fontColor: e.target.value })}
+              className="w-6 h-6 rounded border border-slate-300 cursor-pointer"
+            />
+          </fieldset>
         </>
       )}
 
+      {/* Highlight colour */}
       {isHighlight && (
-        <label className="flex items-center gap-1.5">
-          <span className="text-xs text-slate-500 whitespace-nowrap">Colour</span>
+        <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
+          <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Colour</legend>
           <input
             type="color"
             value={defaults.highlightColor}
-            onChange={(e) => handleColor('highlightColor', e.target.value)}
+            onChange={(e) => setDefaults({ highlightColor: e.target.value })}
             className="w-6 h-6 rounded border border-slate-300 cursor-pointer"
           />
-        </label>
+        </fieldset>
       )}
 
-      <span className="ml-auto text-xs text-slate-400 whitespace-nowrap pr-1">
-        {isTextTool ? 'Click to place text' : isHighlight ? 'Drag to highlight area' : 'Drag to draw'}
+      <span className="ml-auto text-xs text-slate-400 whitespace-nowrap pr-1 italic">
+        {isTextTool ? 'Click anywhere on the page to place text' : isHighlight ? 'Drag to highlight an area' : 'Drag to draw — release to finish'}
       </span>
     </div>
   )
