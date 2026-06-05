@@ -121,28 +121,40 @@ export function Header() {
         className="h-12 flex-shrink-0 flex items-center gap-3 px-4 select-none"
         style={{ backgroundColor: headerBg }}
       >
-        {/* Logo / brand — compact single-line to avoid header overflow */}
-        <div className="flex items-center gap-2 flex-shrink-0 min-w-0 max-w-[200px]">
-          {branding.logoDataUrl ? (
-            <img src={branding.logoDataUrl} alt={branding.orgName} className="h-7 w-auto max-w-[120px] object-contain" />
-          ) : (
-            <>
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: branding.primaryColor || '#178351' }}
-              >
-                <FileText className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span
-                className="text-sm font-bold text-white leading-none truncate hidden sm:block"
-                style={{ fontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif" }}
-                title={`${branding.orgName} — ${branding.appName}`}
-              >
-                {branding.appName}
-              </span>
-            </>
-          )}
-        </div>
+        {/* Logo / brand — clickable when a PDF is open to return to upload screen */}
+        <Tooltip content={hasPDF ? 'Close document' : ''} side="bottom">
+          <button
+            type="button"
+            onClick={() => { if (hasPDF) setShowCloseConfirm(true) }}
+            aria-label={hasPDF ? 'Close document and return to upload screen' : undefined}
+            className={clsx(
+              'flex items-center gap-2 flex-shrink-0 min-w-0 max-w-[200px] rounded px-1 -mx-1',
+              hasPDF
+                ? 'cursor-pointer hover:opacity-75 transition-opacity'
+                : 'cursor-default',
+            )}
+          >
+            {branding.logoDataUrl ? (
+              <img src={branding.logoDataUrl} alt={branding.orgName} className="h-7 w-auto max-w-[120px] object-contain" />
+            ) : (
+              <>
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: branding.primaryColor || '#178351' }}
+                >
+                  <FileText className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span
+                  className="text-sm font-bold text-white leading-none truncate hidden sm:block"
+                  style={{ fontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif" }}
+                  title={`${branding.orgName} — ${branding.appName}`}
+                >
+                  {branding.appName}
+                </span>
+              </>
+            )}
+          </button>
+        </Tooltip>
 
         {hasPDF && (
           <>

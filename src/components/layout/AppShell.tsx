@@ -79,18 +79,18 @@ function EditorContent() {
 export function AppShell() {
   useKeyboardShortcuts()
 
-  // Warn on unload if dirty
-  const isDirty = useStore((s) => s.ui.isDirty)
+  // Warn on refresh/tab-close whenever a document is open
+  const hasPDF = useStore((s) => !!s.pdf.pdfBytes)
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
+      if (hasPDF) {
         e.preventDefault()
         e.returnValue = ''
       }
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
-  }, [isDirty])
+  }, [hasPDF])
 
   return (
     <BrandingProvider>
