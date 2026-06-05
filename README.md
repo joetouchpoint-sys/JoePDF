@@ -1,58 +1,38 @@
 # JoePDF
 
-A secure, browser-based PDF editor for internal company use. All document processing happens entirely in your browser — no uploads, no tracking, no backend required.
+Browser-based PDF editor for internal company use. All processing runs entirely client-side — no files are ever uploaded to a server.
 
-## Features (MVP)
+## Features
 
-- **PDF viewer** — drag-and-drop upload, multi-page navigation, page thumbnails, zoom (25–400%), fit-page/fit-width, per-page rotation
-- **Annotations** — add text, rectangles, ellipses, lines, arrows, freehand drawing, highlights, and image stamps
-- **Redaction** — draw redaction boxes, apply permanent canvas rasterisation (content is physically removed, not just hidden)
-- **Page management** — reorder via drag-and-drop, delete, duplicate, extract pages
-- **Undo/redo** — full command pattern, 100-level history, Ctrl+Z/Y keyboard shortcuts
-- **Branding** — configurable organisation name, logo, and colour scheme
-- **Export** — download the edited PDF with all annotations burned in
+- Annotate PDFs — text, shapes, freehand drawing, highlights, images
+- Secure redaction (canvas rasterisation — content is truly removed)
+- Sign PDFs — draw, type, or upload a signature and stamp it anywhere
+- Page management — reorder, delete, duplicate, rotate pages
+- Split and merge PDFs
+- Compress PDFs
+- Undo / redo for all edits
+- Company branding — logo, colours, fonts (saved to the repo via GitHub API)
 
-## Privacy
-
-Documents never leave your browser. JoePDF contains no analytics, telemetry, or external tracking. See [docs/SECURITY.md](docs/SECURITY.md) for the full security and privacy overview.
-
-## Quick start
+## Running locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm test           # unit tests
+npm run dev        # dev server → http://localhost:5173
 npm run build      # production build → dist/
+npm test           # unit tests
+npm run type-check # TypeScript check
 ```
 
-## Docker
+## Admin login
 
-```bash
-docker build -t joepdf .
-docker run -p 8080:80 joepdf
-```
+The settings gear opens a branding panel protected by an admin login.
 
-## Documentation
+**Default credentials:** username `Admin`, password `AdminPDF!`
 
-- [Setup guide](docs/SETUP.md)
-- [Deployment guide](docs/DEPLOYMENT.md)
-- [Branding guide](docs/BRANDING.md)
-- [Security overview](docs/SECURITY.md)
+You can change these from inside the panel (Settings → Change credentials). Custom credentials are stored in your browser's localStorage on the current device only.
 
-## Technology
+> **Note:** The admin panel only changes branding — colours, logo, fonts, app name. Saving changes globally commits to the GitHub repo via the GitHub API using a Personal Access Token stored on your own device. Without that PAT, changes are local to your browser only. There is no meaningful security risk to having the default credentials visible here.
 
-| Library | Version | Licence | Role |
-|---|---|---|---|
-| React | 19 | MIT | UI framework |
-| pdfjs-dist | 5.x | Apache 2.0 | PDF rendering |
-| pdf-lib | 1.17 | MIT | PDF creation and modification |
-| Konva / react-konva | 10 / 19 | MIT | Interactive annotation canvas |
-| Zustand | 5 | MIT | State management |
-| Tailwind CSS | 3 | MIT | Styling |
-| Vite | 8 | MIT | Build tool |
-| Vitest | 4 | MIT | Unit testing |
-| Playwright | 1 | Apache 2.0 | E2E testing |
+## Stack
 
-## Licence
-
-MIT
+React 19 · TypeScript · Vite · pdf.js · pdf-lib · Konva · Zustand · Tailwind CSS

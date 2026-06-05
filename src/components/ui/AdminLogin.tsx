@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Lock, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react'
-import {
-  verifyAdmin,
-  setAdminSession,
-  updateAdminCreds,
-  hasAdminCredentials,
-  computeAdminHash,
-} from '@/lib/adminAuth'
+import { Lock, Eye, EyeOff } from 'lucide-react'
+import { verifyAdmin, setAdminSession, updateAdminCreds } from '@/lib/adminAuth'
 import { showToast } from './Toast'
 
 interface AdminLoginProps {
@@ -20,13 +14,6 @@ export function AdminLogin({ onSuccess, onCancel }: AdminLoginProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // No credentials at all — go straight to setup
-  const [setupMode] = useState(() => !hasAdminCredentials())
-  const [setupUser, setSetupUser] = useState('')
-  const [setupPass, setSetupPass] = useState('')
-  const [setupConfirm, setSetupConfirm] = useState('')
-  const [setupLoading, setSetupLoading] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,92 +39,6 @@ export function AdminLogin({ onSuccess, onCancel }: AdminLoginProps) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleFirstTimeSetup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!setupUser.trim()) { showToast('Username cannot be empty.', 'error'); return }
-    if (setupPass.length < 6) { showToast('Password must be at least 6 characters.', 'error'); return }
-    if (setupPass !== setupConfirm) { showToast('Passwords do not match.', 'error'); return }
-    setSetupLoading(true)
-    try {
-      await updateAdminCreds(setupUser.trim(), setupPass)
-      setAdminSession(true)
-      showToast('Admin credentials set. You are now signed in.', 'success')
-      onSuccess()
-    } finally {
-      setSetupLoading(false)
-    }
-  }
-
-  if (setupMode) {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
-        onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
-      >
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
-          <div className="px-6 pt-6 pb-4 flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#178351' }}>
-              <Lock className="w-5 h-5 text-white" />
-            </div>
-            <div className="text-center">
-              <h2 className="text-lg font-bold" style={{ color: '#292C4F', fontFamily: "'Nunito', system-ui" }}>
-                Set up admin password
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">No credentials configured — create your admin account</p>
-            </div>
-          </div>
-
-          <form onSubmit={(e) => void handleFirstTimeSetup(e)} className="px-6 pb-6 flex flex-col gap-3">
-            <input
-              type="text"
-              placeholder="Username"
-              value={setupUser}
-              autoFocus
-              autoComplete="username"
-              onChange={(e) => setSetupUser(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-              style={{ '--tw-ring-color': '#178351' } as React.CSSProperties}
-            />
-            <input
-              type="password"
-              placeholder="Password (min 6 characters)"
-              value={setupPass}
-              autoComplete="new-password"
-              onChange={(e) => setSetupPass(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-              style={{ '--tw-ring-color': '#178351' } as React.CSSProperties}
-            />
-            <input
-              type="password"
-              placeholder="Confirm password"
-              value={setupConfirm}
-              autoComplete="new-password"
-              onChange={(e) => setSetupConfirm(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-              style={{ '--tw-ring-color': '#178351' } as React.CSSProperties}
-            />
-            <p className="text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2">
-              Credentials stored on this device only. To make them work across all deployments, copy the hash from Settings → Change credentials → GitHub secret.
-            </p>
-            <div className="flex gap-2 pt-1">
-              <button type="button" onClick={onCancel} className="flex-1 border border-slate-200 rounded-lg py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={setupLoading || !setupUser || !setupPass || !setupConfirm}
-                className="flex-1 rounded-lg py-2 text-sm font-semibold text-white transition-all disabled:opacity-50"
-                style={{ backgroundColor: '#178351' }}
-              >
-                {setupLoading ? 'Setting up…' : 'Create account'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -238,64 +139,19 @@ export function ChangeCredsForm({ onDone }: ChangeCredsFormProps) {
   const [newPass, setNewPass] = useState('')
   const [confirmPass, setConfirmPass] = useState('')
   const [saving, setSaving] = useState(false)
-  const [generatedHash, setGeneratedHash] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
 
   const handleSave = async () => {
     if (!newUser.trim()) { showToast('Username cannot be empty.', 'error'); return }
-    if (newPass.length < 6) { showToast('Password must be at least 6 characters.', 'error'); return }
+    if (newPass.length < 4) { showToast('Password must be at least 4 characters.', 'error'); return }
     if (newPass !== confirmPass) { showToast('Passwords do not match.', 'error'); return }
     setSaving(true)
     try {
-      const hash = await computeAdminHash(newPass)
       await updateAdminCreds(newUser.trim(), newPass)
-      setGeneratedHash(hash)
       showToast('Admin credentials updated.', 'success')
+      onDone()
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleCopy = async () => {
-    if (!generatedHash) return
-    await navigator.clipboard.writeText(generatedHash)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  if (generatedHash) {
-    return (
-      <div className="flex flex-col gap-2 pt-3 border-t border-slate-100">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Credentials saved</p>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex flex-col gap-2">
-          <p className="text-xs text-blue-800 font-medium">Make it work across all devices</p>
-          <p className="text-xs text-blue-700 leading-relaxed">
-            Copy this hash and add it as a GitHub Actions Secret named{' '}
-            <code className="bg-blue-100 px-1 rounded font-mono">VITE_ADMIN_HASH</code>{' '}
-            in your repo Settings → Secrets. This removes the hardcoded default from source.
-          </p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 bg-white border border-blue-200 rounded px-2 py-1 text-[10px] font-mono text-slate-700 truncate">
-              {generatedHash}
-            </code>
-            <button
-              type="button"
-              onClick={() => void handleCopy()}
-              className="flex-shrink-0 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
-            >
-              {copied ? <CheckCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
-        </div>
-        <button
-          onClick={onDone}
-          className="text-xs py-1.5 border border-slate-200 rounded-md text-slate-500 hover:bg-slate-50"
-        >
-          Done
-        </button>
-      </div>
-    )
   }
 
   return (
@@ -310,7 +166,7 @@ export function ChangeCredsForm({ onDone }: ChangeCredsFormProps) {
       />
       <input
         type="password"
-        placeholder="New password (min 6 characters)"
+        placeholder="New password"
         value={newPass}
         onChange={(e) => setNewPass(e.target.value)}
         className="border border-slate-200 rounded-md px-2.5 py-1.5 text-sm"

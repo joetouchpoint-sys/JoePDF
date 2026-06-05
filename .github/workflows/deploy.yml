@@ -27,8 +27,6 @@ jobs:
 
       - name: Build for GitHub Pages
         run: npx tsc -b && npx vite build --base /
-        env:
-          VITE_ADMIN_HASH: ${{ secrets.VITE_ADMIN_HASH }}
 
       - name: Verify build output
         run: |
