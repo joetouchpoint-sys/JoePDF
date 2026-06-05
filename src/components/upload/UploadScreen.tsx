@@ -29,7 +29,7 @@ export function UploadScreen() {
   const branding = useStore((s) => s.branding)
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 py-12 gap-10 bg-slate-50">
+    <div className="flex flex-col items-center justify-center min-h-full px-6 py-10 gap-10 bg-slate-50">
       {/* Brand header */}
       <div className="text-center">
         <p

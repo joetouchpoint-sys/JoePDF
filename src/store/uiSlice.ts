@@ -29,6 +29,8 @@ export interface UISlice {
     drawingDefaults: DrawingDefaults
     newlyCreatedId: string | null
     splitByGroupsOpen: boolean
+    compressDialogOpen: boolean
+    signatureDialogOpen: boolean
   }
   setActiveTool: (tool: Tool) => void
   setZoom: (zoom: number) => void
@@ -45,6 +47,8 @@ export interface UISlice {
   setDrawingDefaults: (d: Partial<DrawingDefaults>) => void
   setNewlyCreatedId: (id: string | null) => void
   setSplitByGroupsOpen: (open: boolean) => void
+  setCompressDialogOpen: (open: boolean) => void
+  setSignatureDialogOpen: (open: boolean) => void
   resetUI: () => void
 }
 
@@ -59,13 +63,15 @@ const initialDrawingDefaults: DrawingDefaults = {
   highlightColor: '#A0DA00', // Lime green
 }
 
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
 const initialUI = {
   activeTool: Tool.SELECT,
-  zoom: 1,
+  zoom: isMobile ? 0.5 : 1,
   currentPage: 0,
   selectedAnnotationId: null,
-  sidebarOpen: true,
-  toolbarExpanded: true,
+  sidebarOpen: !isMobile,
+  toolbarExpanded: !isMobile,
   inspectorOpen: true,
   pageRotations: new Map<number, number>(),
   isDirty: false,
@@ -75,6 +81,8 @@ const initialUI = {
   drawingDefaults: initialDrawingDefaults,
   newlyCreatedId: null,
   splitByGroupsOpen: false,
+  compressDialogOpen: false,
+  signatureDialogOpen: false,
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
@@ -106,5 +114,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
     set((s) => ({ ui: { ...s.ui, drawingDefaults: { ...s.ui.drawingDefaults, ...d } } })),
   setNewlyCreatedId: (id) => set((s) => ({ ui: { ...s.ui, newlyCreatedId: id } })),
   setSplitByGroupsOpen: (open) => set((s) => ({ ui: { ...s.ui, splitByGroupsOpen: open } })),
+  setCompressDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, compressDialogOpen: open } })),
+  setSignatureDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, signatureDialogOpen: open } })),
   resetUI: () => set({ ui: initialUI }),
 })

@@ -26,12 +26,31 @@ export async function fetchDeployedConfig(): Promise<BrandingConfig | null> {
   }
 }
 
-/** Apply branding config to CSS custom properties on :root */
+/** Apply branding config to CSS custom properties on :root and inject custom font if set */
 export function applyBrandingToDom(config: BrandingConfig): void {
   const root = document.documentElement
   root.style.setProperty('--color-primary', config.primaryColor)
   root.style.setProperty('--color-secondary', config.secondaryColor)
   root.style.setProperty('--color-accent', config.accentColor)
+
+  // Inject custom font @font-face when a font file has been uploaded
+  const existingStyle = document.getElementById('joepdf-custom-font')
+  if (existingStyle) existingStyle.remove()
+
+  if (config.customFontBase64 && config.customFontName) {
+    const style = document.createElement('style')
+    style.id = 'joepdf-custom-font'
+    style.textContent = `
+      @font-face {
+        font-family: "${config.customFontName}";
+        src: url("data:font/truetype;base64,${config.customFontBase64}") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+    `
+    document.head.appendChild(style)
+  }
 }
 
 /** Download the current branding config as a brand-config.json file.

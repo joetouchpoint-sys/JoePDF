@@ -8,6 +8,8 @@ export interface BrandingConfig {
   footerText: string
   supportEmail: string
   privacyNotice: string
+  customFontBase64: string | null
+  customFontName: string
 }
 
 export const DEFAULT_BRANDING: BrandingConfig = {
@@ -20,4 +22,6 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   footerText: '',
   supportEmail: '',
   privacyNotice: '',
+  customFontBase64: null,
+  customFontName: 'VAG Rounded',
 }

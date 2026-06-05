@@ -6,6 +6,8 @@ import { UploadScreen } from '@/components/upload/UploadScreen'
 import { BrandingProvider } from '@/components/branding/BrandingProvider'
 import { BrandingConfigPanel } from '@/components/branding/BrandingConfigPanel'
 import { SplitByGroupsDialog } from '@/components/pdf/SplitByGroupsDialog'
+import { CompressDialog } from '@/components/pdf/CompressDialog'
+import { SignatureDialog } from '@/components/pdf/SignatureDialog'
 import { ToastContainer } from '@/components/ui/Toast'
 import { usePDFDocument } from '@/hooks/usePDFDocument'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -43,7 +45,11 @@ function EditorContent() {
     <div className="flex flex-1 min-h-0 overflow-hidden">
       <Sidebar doc={doc} />
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden" role="main" id="main-content">
+      <main
+        className={hasPDF ? 'flex-1 flex flex-col min-w-0 overflow-hidden' : 'flex-1 flex flex-col min-w-0 overflow-y-auto'}
+        role="main"
+        id="main-content"
+      >
         {!hasPDF && <UploadScreen />}
 
         {hasPDF && isLoading && (
@@ -93,6 +99,8 @@ export function AppShell() {
       </div>
       <BrandingConfigPanel />
       <SplitByGroupsDialog />
+      <CompressDialog />
+      <SignatureDialog />
       <ToastContainer />
     </BrandingProvider>
   )

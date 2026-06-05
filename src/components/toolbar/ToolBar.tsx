@@ -2,6 +2,7 @@ import {
   MousePointer2, Type, Square, Circle, Minus, ArrowRight,
   Pencil, Highlighter, Image as ImageIcon, EraserIcon,
   ChevronRight, ChevronLeft, MousePointerClick, LayoutGrid,
+  FileArchive, PenLine,
 } from 'lucide-react'
 import { Tool } from '@/types/tool'
 import { ToolButton } from './ToolButton'
@@ -64,6 +65,8 @@ export function ToolBar() {
   const setTextSelectMode = useStore((s) => s.setTextSelectMode)
   const hasPDF = useStore((s) => !!s.pdf.pdfBytes)
   const setSplitByGroupsOpen = useStore((s) => s.setSplitByGroupsOpen)
+  const setCompressDialogOpen = useStore((s) => s.setCompressDialogOpen)
+  const setSignatureDialogOpen = useStore((s) => s.setSignatureDialogOpen)
 
   return (
     <aside
@@ -138,6 +141,44 @@ export function ToolBar() {
             <LayoutGrid className="w-4 h-4 flex-shrink-0" />
             {expanded && <span className="flex-1 truncate">Split by groups</span>}
             {expanded && <span className="ml-auto text-[10px] opacity-40 flex-shrink-0">G</span>}
+          </button>
+        </Tooltip>
+        <Tooltip content="Compress PDF to reduce file size" side="right">
+          <button
+            type="button"
+            onClick={() => setCompressDialogOpen(true)}
+            disabled={!hasPDF}
+            aria-label="Compress PDF"
+            className={clsx(
+              'flex items-center gap-2 rounded-lg transition-all duration-100',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+              hasPDF
+                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                : 'text-slate-300 cursor-not-allowed',
+            )}
+          >
+            <FileArchive className="w-4 h-4 flex-shrink-0" />
+            {expanded && <span className="flex-1 truncate">Compress PDF</span>}
+          </button>
+        </Tooltip>
+        <Tooltip content="Sign PDF — draw, type, or upload a signature" side="right">
+          <button
+            type="button"
+            onClick={() => setSignatureDialogOpen(true)}
+            disabled={!hasPDF}
+            aria-label="Sign PDF"
+            className={clsx(
+              'flex items-center gap-2 rounded-lg transition-all duration-100',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+              hasPDF
+                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                : 'text-slate-300 cursor-not-allowed',
+            )}
+          >
+            <PenLine className="w-4 h-4 flex-shrink-0" />
+            {expanded && <span className="flex-1 truncate">Sign PDF</span>}
           </button>
         </Tooltip>
       </div>

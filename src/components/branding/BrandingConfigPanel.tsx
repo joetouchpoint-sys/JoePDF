@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { HexColorInput } from '@/components/ui/HexColorInput'
 import { useStore } from '@/store'
 import { Dialog } from '@/components/ui/Dialog'
@@ -138,6 +138,7 @@ export function BrandingConfigPanel() {
   const setBranding = useStore((s) => s.setBranding)
   const resetBranding = useStore((s) => s.resetBranding)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fontInputRef = useRef<HTMLInputElement>(null)
 
   const [authed, setAuthed] = useState(() => isAdminSession())
   const [showChangeCreds, setShowChangeCreds] = useState(false)
@@ -154,6 +155,25 @@ export function BrandingConfigPanel() {
     reader.readAsDataURL(file)
     e.target.value = ''
   }
+
+  const handleFontUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.name.match(/\.(ttf|otf|woff|woff2)$/i)) {
+      showToast('Please select a font file (.ttf, .otf, .woff, .woff2).', 'error')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // Strip the data URL prefix to store only the base64 part
+      const base64 = result.split(',')[1] ?? ''
+      setBranding({ customFontBase64: base64 })
+      showToast(`Font "${file.name}" uploaded. Save to apply sitewide.`, 'success')
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }, [setBranding])
 
   const handleSave = async () => {
     if (!ghSettings) {
@@ -295,6 +315,48 @@ export function BrandingConfigPanel() {
               className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
+        </div>
+
+        {/* Custom font */}
+        <div>
+          <label className="text-xs font-medium text-slate-600 block mb-1">
+            Custom brand font
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(headline text)</span>
+          </label>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="secondary" size="sm" onClick={() => fontInputRef.current?.click()}>
+              {branding.customFontBase64 ? 'Replace font' : 'Upload .ttf / .otf'}
+            </Button>
+            {branding.customFontBase64 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setBranding({ customFontBase64: null })}
+              >
+                Remove
+              </Button>
+            )}
+            <input
+              type="text"
+              value={branding.customFontName}
+              onChange={(e) => setBranding({ customFontName: e.target.value })}
+              placeholder="Font family name"
+              className="border border-slate-200 rounded px-2 py-1 text-xs w-32"
+              title="CSS font-family name to register (e.g. VAG Rounded)"
+            />
+          </div>
+          <input
+            ref={fontInputRef}
+            type="file"
+            accept=".ttf,.otf,.woff,.woff2"
+            className="sr-only"
+            onChange={handleFontUpload}
+          />
+          <p className="text-xs text-slate-400 mt-1">
+            {branding.customFontBase64
+              ? `Font loaded · registered as "${branding.customFontName}"`
+              : 'Upload your licensed TTF/OTF file. Stored in brand-config.json — never sent to any server.'}
+          </p>
         </div>
 
         {/* GitHub integration status */}

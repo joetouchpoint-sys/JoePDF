@@ -1,5 +1,5 @@
-/* Google Fonts — DM Sans (body) + Nunito (headline, closest open-source to VAG Rounded Bold) */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Nunito:wght@700;800&display=swap');
+/* Google Fonts — DM Sans (body) + Nunito (headline) + signature handwriting fonts */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Nunito:wght@700;800&family=Dancing+Script:wght@600&family=Caveat:wght@600&family=Satisfy&family=Kalam&display=swap');
 
 @tailwind base;
 @tailwind components;
