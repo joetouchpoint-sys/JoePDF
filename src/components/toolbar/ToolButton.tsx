@@ -9,32 +9,46 @@ interface ToolButtonProps {
   shortcut?: string
   icon: React.ReactNode
   disabled?: boolean
+  expanded?: boolean
 }
 
-export function ToolButton({ tool, label, shortcut, icon, disabled }: ToolButtonProps) {
+export function ToolButton({ tool, label, shortcut, icon, disabled, expanded }: ToolButtonProps) {
   const activeTool = useStore((s) => s.ui.activeTool)
   const setActiveTool = useStore((s) => s.setActiveTool)
   const isActive = activeTool === tool
 
+  const button = (
+    <button
+      type="button"
+      onClick={() => setActiveTool(tool)}
+      disabled={disabled}
+      aria-pressed={isActive}
+      aria-label={label}
+      className={clsx(
+        'flex items-center gap-2 rounded-lg transition-all duration-100',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary] focus-visible:ring-offset-1',
+        'disabled:pointer-events-none disabled:opacity-40',
+        expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+        isActive
+          ? 'bg-[--color-primary] text-white shadow-sm'
+          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800',
+      )}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      {expanded && <span className="truncate">{label}</span>}
+      {expanded && shortcut && (
+        <span className={clsx('ml-auto text-[10px] flex-shrink-0', isActive ? 'opacity-70' : 'opacity-40')}>
+          {shortcut}
+        </span>
+      )}
+    </button>
+  )
+
+  if (expanded) return button
+
   return (
     <Tooltip content={label} shortcut={shortcut} side="right">
-      <button
-        type="button"
-        onClick={() => setActiveTool(tool)}
-        disabled={disabled}
-        aria-pressed={isActive}
-        aria-label={label}
-        className={clsx(
-          'w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-100',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary] focus-visible:ring-offset-1',
-          'disabled:pointer-events-none disabled:opacity-40',
-          isActive
-            ? 'bg-[--color-primary] text-white shadow-sm'
-            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800',
-        )}
-      >
-        {icon}
-      </button>
+      {button}
     </Tooltip>
   )
 }

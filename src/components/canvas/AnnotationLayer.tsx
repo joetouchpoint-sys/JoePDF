@@ -23,6 +23,7 @@ import { RedactionBoxShape } from './RedactionBox'
 import { ImageAnnotationShape } from './ImageAnnotation'
 import { importImage } from '@/lib/imageImporter'
 import { showToast } from '@/components/ui/Toast'
+import type { DrawingDefaults } from '@/store/uiSlice'
 
 interface AnnotationLayerProps {
   pageIndex: number
@@ -32,9 +33,13 @@ interface AnnotationLayerProps {
 
 export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerProps) {
   const activeTool = useStore((s) => s.ui.activeTool)
+  const textSelectMode = useStore((s) => s.ui.textSelectMode)
   const selectedId = useStore((s) => s.ui.selectedAnnotationId)
+  const newlyCreatedId = useStore((s) => s.ui.newlyCreatedId)
   const setSelectedId = useStore((s) => s.setSelectedAnnotationId)
   const setActiveTool = useStore((s) => s.setActiveTool)
+  const setNewlyCreatedId = useStore((s) => s.setNewlyCreatedId)
+  const drawingDefaults = useStore((s) => s.ui.drawingDefaults)
   const annotations = useAnnotations(pageIndex)
   const { dispatch } = useHistory()
   const stageRef = useRef<Konva.Stage>(null)
@@ -44,7 +49,6 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
   const activeDrawingId = useRef<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  // Delete selected annotation on custom event
   useEffect(() => {
     const handler = (e: Event) => {
       const id = (e as CustomEvent<string>).detail
@@ -67,18 +71,36 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
   const handleMouseDown = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
       if (activeTool === Tool.SELECT) {
-        if (e.target === e.target.getStage()) {
-          setSelectedId(null)
-        }
+        if (e.target === e.target.getStage()) setSelectedId(null)
         return
       }
-
       if (activeTool === Tool.IMAGE) return
 
       const pos = getPos(e)
+      const id = generateId()
+
+      // Text: single click places a text box and immediately opens editor
+      if (activeTool === Tool.TEXT) {
+        const ann: TextAnnotation = {
+          id, type: 'text', pageIndex,
+          x: pos.x, y: pos.y, width: 200, height: 40,
+          text: 'Type here…',
+          fontSize: drawingDefaults.fontSize,
+          fontFamily: 'sans-serif',
+          fontColor: drawingDefaults.fontColor,
+          fontBold: false, fontItalic: false,
+          align: 'left', backgroundColor: null,
+          opacity: 1, visible: true,
+        }
+        dispatch(new AddAnnotationCommand(pageIndex, ann))
+        setSelectedId(id)
+        setNewlyCreatedId(id)
+        setActiveTool(Tool.SELECT)
+        return
+      }
+
       isDrawingRef.current = true
       drawStartRef.current = pos
-      const id = generateId()
       activeDrawingId.current = id
 
       if (activeTool === Tool.FREEHAND) {
@@ -86,19 +108,19 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
         const ann: FreehandAnnotation = {
           id, type: 'freehand', pageIndex,
           x: pos.x, y: pos.y, width: 0, height: 0,
-          points: [pos.x, pos.y], strokeColor: '#1d4ed8',
-          strokeWidth: 3, tension: 0.5, opacity: 1, visible: true,
+          points: [pos.x, pos.y],
+          strokeColor: drawingDefaults.strokeColor,
+          strokeWidth: drawingDefaults.strokeWidth,
+          tension: 0.5, opacity: 1, visible: true,
         }
         dispatch(new AddAnnotationCommand(pageIndex, ann))
         return
       }
 
-      const defaults = getDefaultAnnotation(activeTool, id, pageIndex, pos.x, pos.y)
-      if (defaults) {
-        dispatch(new AddAnnotationCommand(pageIndex, defaults))
-      }
+      const ann = buildAnnotation(activeTool, id, pageIndex, pos.x, pos.y, drawingDefaults)
+      if (ann) dispatch(new AddAnnotationCommand(pageIndex, ann))
     },
-    [activeTool, pageIndex, dispatch, getPos, setSelectedId],
+    [activeTool, pageIndex, dispatch, getPos, setSelectedId, setActiveTool, setNewlyCreatedId, drawingDefaults],
   )
 
   const handleMouseMove = useCallback(
@@ -110,9 +132,7 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
 
       if (activeTool === Tool.FREEHAND) {
         freehandPointsRef.current = [...freehandPointsRef.current, pos.x, pos.y]
-        useStore.getState().updateAnnotation(pageIndex, id, {
-          points: freehandPointsRef.current,
-        })
+        useStore.getState().updateAnnotation(pageIndex, id, { points: freehandPointsRef.current })
         return
       }
 
@@ -141,7 +161,8 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
 
     if (id) {
       const ann = useStore.getState().annotations.get(pageIndex)?.find((a) => a.id === id)
-      if (ann && ann.width < 4 && ann.height < 4 && ann.type !== 'freehand') {
+      // Remove zero-size annotations (except freehand and text which have defaults)
+      if (ann && ann.width < 4 && ann.height < 4 && ann.type !== 'freehand' && ann.type !== 'text') {
         useStore.getState().removeAnnotation(pageIndex, id)
       }
     }
@@ -163,15 +184,14 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
         try {
           const imported = await importImage(file)
           const id = generateId()
-          const centerX = width / 2 - Math.min(imported.naturalWidth, width / 2) / 2
+          const imgWidth = Math.min(imported.naturalWidth, width / 2)
+          const imgHeight = (imported.naturalHeight / imported.naturalWidth) * imgWidth
           const ann: ImageAnnotation = {
             id, type: 'image', pageIndex,
-            x: centerX, y: 50,
-            width: Math.min(imported.naturalWidth, width / 2),
-            height: Math.min(imported.naturalHeight, height / 2),
+            x: width / 2 - imgWidth / 2, y: 50,
+            width: imgWidth, height: imgHeight,
             src: imported.src,
-            naturalWidth: imported.naturalWidth,
-            naturalHeight: imported.naturalHeight,
+            naturalWidth: imported.naturalWidth, naturalHeight: imported.naturalHeight,
             opacity: 1, visible: true,
           }
           dispatch(new AddAnnotationCommand(pageIndex, ann))
@@ -183,13 +203,14 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       fileInputRef.current = input
     }
     fileInputRef.current.click()
-  }, [activeTool, pageIndex, width, height, dispatch, setActiveTool])
+  }, [activeTool, pageIndex, width, dispatch, setActiveTool])
 
   useEffect(() => {
-    if (activeTool === Tool.IMAGE) {
-      handleImageTool()
-    }
+    if (activeTool === Tool.IMAGE) handleImageTool()
   }, [activeTool, handleImageTool])
+
+  // When text select mode is on, Konva canvas passes events through
+  if (textSelectMode) return null
 
   return (
     <Stage
@@ -201,7 +222,6 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
         top: 0,
         left: 0,
         cursor: getCursor(activeTool),
-        pointerEvents: activeTool === Tool.SELECT ? 'auto' : 'auto',
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -210,14 +230,14 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       <Layer>
         {annotations.map((ann) => {
           const isSelected = selectedId === ann.id && activeTool === Tool.SELECT
+          const autoEdit = ann.id === newlyCreatedId
           const onSelect = () => activeTool === Tool.SELECT && setSelectedId(ann.id)
           const onDragEnd = (newPos: { x: number; y: number }) => {
-            const old = { x: ann.x, y: ann.y }
-            dispatch(new MoveAnnotationCommand(pageIndex, ann.id, old, newPos))
+            dispatch(new MoveAnnotationCommand(pageIndex, ann.id, { x: ann.x, y: ann.y }, newPos))
           }
           const onResizeEnd = (geo: { x: number; y: number; width: number; height: number }) => {
-            const old = { x: ann.x, y: ann.y, width: ann.width, height: ann.height }
-            dispatch(new ResizeAnnotationCommand(pageIndex, ann.id, old, geo))
+            dispatch(new ResizeAnnotationCommand(pageIndex, ann.id,
+              { x: ann.x, y: ann.y, width: ann.width, height: ann.height }, geo))
           }
 
           switch (ann.type) {
@@ -227,9 +247,11 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
                   key={ann.id}
                   annotation={ann as TextAnnotation}
                   isSelected={isSelected}
+                  autoEdit={autoEdit}
                   onSelect={onSelect}
                   onDragEnd={onDragEnd}
                   onResizeEnd={onResizeEnd}
+                  onEditDone={() => setNewlyCreatedId(null)}
                   pageIndex={pageIndex}
                 />
               )
@@ -305,38 +327,34 @@ function getCursor(tool: Tool): string {
     case Tool.REDACT:
     case Tool.RECT:
     case Tool.ELLIPSE:
-    case Tool.HIGHLIGHT: return 'crosshair'
+    case Tool.HIGHLIGHT:
     case Tool.LINE:
-    case Tool.ARROW: return 'crosshair'
+    case Tool.ARROW:
     case Tool.FREEHAND: return 'crosshair'
-    case Tool.IMAGE: return 'default'
     default: return 'default'
   }
 }
 
-function getDefaultAnnotation(
+function buildAnnotation(
   tool: Tool,
   id: string,
   pageIndex: number,
   x: number,
   y: number,
+  d: DrawingDefaults,
 ): Annotation | null {
   const base = { id, pageIndex, x, y, width: 0, height: 0, opacity: 1, visible: true }
-
   switch (tool) {
-    case Tool.TEXT:
-      return { ...base, type: 'text', text: 'Text', fontSize: 16, fontFamily: 'sans-serif',
-        fontColor: '#1e293b', fontBold: false, fontItalic: false, align: 'left', backgroundColor: null }
     case Tool.RECT:
-      return { ...base, type: 'rect', fillColor: null, strokeColor: '#1d4ed8', strokeWidth: 2, cornerRadius: 0 }
+      return { ...base, type: 'rect', fillColor: d.fillColor, strokeColor: d.strokeColor, strokeWidth: d.strokeWidth, cornerRadius: 0 }
     case Tool.ELLIPSE:
-      return { ...base, type: 'ellipse', fillColor: null, strokeColor: '#1d4ed8', strokeWidth: 2 }
+      return { ...base, type: 'ellipse', fillColor: d.fillColor, strokeColor: d.strokeColor, strokeWidth: d.strokeWidth }
     case Tool.LINE:
-      return { ...base, type: 'line', points: [x, y, x, y], strokeColor: '#1d4ed8', strokeWidth: 2 }
+      return { ...base, type: 'line', points: [x, y, x, y], strokeColor: d.strokeColor, strokeWidth: d.strokeWidth }
     case Tool.ARROW:
-      return { ...base, type: 'arrow', points: [x, y, x, y], strokeColor: '#1d4ed8', strokeWidth: 2 }
+      return { ...base, type: 'arrow', points: [x, y, x, y], strokeColor: d.strokeColor, strokeWidth: d.strokeWidth }
     case Tool.HIGHLIGHT:
-      return { ...base, type: 'highlight', fillColor: '#fde047', opacity: 0.5 }
+      return { ...base, type: 'highlight', fillColor: d.highlightColor, opacity: 0.45 }
     case Tool.REDACT:
       return { ...base, type: 'redact', applied: false }
     default:

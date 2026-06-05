@@ -32,6 +32,33 @@
   }
 }
 
+/* PDF.js text layer — invisible but selectable when text-select mode is on */
+.pdfTextLayer {
+  line-height: 1;
+}
+
+.pdfTextLayer > span {
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  /* Transparent but still selectable */
+  color: transparent;
+}
+
+.pdfTextLayer ::selection {
+  background: rgba(29, 78, 216, 0.25);
+}
+
+/* Hint overlay shown when text-select mode is active */
+.pdfTextLayer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(251, 191, 36, 0.06);
+  pointer-events: none;
+}
+
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;

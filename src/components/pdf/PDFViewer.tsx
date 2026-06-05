@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import type { PDFDocumentProxy } from '@/lib/pdfRenderer'
 import { PDFPage } from './PDFPage'
 import { PageControls } from './PageControls'
+import { DrawingOptionsBar } from '@/components/toolbar/DrawingOptionsBar'
 import { useStore } from '@/store'
 
 interface PDFViewerProps {
@@ -60,6 +61,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <PageControls />
+      <DrawingOptionsBar />
       <div
         ref={containerRef}
         id="pdf-viewer-container"

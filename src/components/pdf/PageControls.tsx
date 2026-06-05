@@ -12,6 +12,7 @@ export function PageControls() {
   const pageMeta = useStore((s) => s.pdf.pageMeta)
   const setPageRotation = useStore((s) => s.setPageRotation)
   const pageRotations = useStore((s) => s.ui.pageRotations)
+  const textSelectMode = useStore((s) => s.ui.textSelectMode)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const rotateCW = useCallback(() => {
@@ -100,8 +101,15 @@ export function PageControls() {
         </Button>
       </Tooltip>
 
-      <div className="ml-auto text-xs text-slate-400 tabular-nums pr-1">
-        {pageCount > 0 && `Page ${currentPage + 1} of ${pageCount}`}
+      <div className="ml-auto flex items-center gap-2 pr-1">
+        {textSelectMode && (
+          <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+            Text select mode — click toolbar to draw
+          </span>
+        )}
+        <span className="text-xs text-slate-400 tabular-nums">
+          {pageCount > 0 && `Page ${currentPage + 1} of ${pageCount}`}
+        </span>
       </div>
     </div>
   )

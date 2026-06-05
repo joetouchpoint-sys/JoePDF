@@ -1,6 +1,15 @@
 import type { StateCreator } from 'zustand'
 import { Tool } from '@/types/tool'
 
+export interface DrawingDefaults {
+  strokeColor: string
+  fillColor: string | null
+  strokeWidth: number
+  fontSize: number
+  fontColor: string
+  highlightColor: string
+}
+
 export interface UISlice {
   ui: {
     activeTool: Tool
@@ -8,23 +17,40 @@ export interface UISlice {
     currentPage: number
     selectedAnnotationId: string | null
     sidebarOpen: boolean
+    toolbarExpanded: boolean
     inspectorOpen: boolean
     pageRotations: Map<number, number>
     isDirty: boolean
     isExporting: boolean
     showBrandingPanel: boolean
+    textSelectMode: boolean
+    drawingDefaults: DrawingDefaults
+    newlyCreatedId: string | null
   }
   setActiveTool: (tool: Tool) => void
   setZoom: (zoom: number) => void
   setCurrentPage: (page: number) => void
   setSelectedAnnotationId: (id: string | null) => void
   setSidebarOpen: (open: boolean) => void
+  setToolbarExpanded: (expanded: boolean) => void
   setInspectorOpen: (open: boolean) => void
   setPageRotation: (pageIndex: number, rotation: number) => void
   setIsDirty: (dirty: boolean) => void
   setIsExporting: (exporting: boolean) => void
   setShowBrandingPanel: (show: boolean) => void
+  setTextSelectMode: (on: boolean) => void
+  setDrawingDefaults: (d: Partial<DrawingDefaults>) => void
+  setNewlyCreatedId: (id: string | null) => void
   resetUI: () => void
+}
+
+const initialDrawingDefaults: DrawingDefaults = {
+  strokeColor: '#1d4ed8',
+  fillColor: null,
+  strokeWidth: 2,
+  fontSize: 16,
+  fontColor: '#1e293b',
+  highlightColor: '#fde047',
 }
 
 const initialUI = {
@@ -33,23 +59,29 @@ const initialUI = {
   currentPage: 0,
   selectedAnnotationId: null,
   sidebarOpen: true,
+  toolbarExpanded: false,
   inspectorOpen: true,
   pageRotations: new Map<number, number>(),
   isDirty: false,
   isExporting: false,
   showBrandingPanel: false,
+  textSelectMode: false,
+  drawingDefaults: initialDrawingDefaults,
+  newlyCreatedId: null,
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
   ui: initialUI,
 
-  setActiveTool: (tool) => set((s) => ({ ui: { ...s.ui, activeTool: tool } })),
+  setActiveTool: (tool) =>
+    set((s) => ({ ui: { ...s.ui, activeTool: tool, textSelectMode: false } })),
   setZoom: (zoom) =>
     set((s) => ({ ui: { ...s.ui, zoom: Math.min(4, Math.max(0.25, zoom)) } })),
   setCurrentPage: (page) => set((s) => ({ ui: { ...s.ui, currentPage: page } })),
   setSelectedAnnotationId: (id) =>
     set((s) => ({ ui: { ...s.ui, selectedAnnotationId: id } })),
   setSidebarOpen: (open) => set((s) => ({ ui: { ...s.ui, sidebarOpen: open } })),
+  setToolbarExpanded: (expanded) => set((s) => ({ ui: { ...s.ui, toolbarExpanded: expanded } })),
   setInspectorOpen: (open) => set((s) => ({ ui: { ...s.ui, inspectorOpen: open } })),
   setPageRotation: (pageIndex, rotation) =>
     set((s) => {
@@ -61,5 +93,10 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setIsExporting: (exporting) => set((s) => ({ ui: { ...s.ui, isExporting: exporting } })),
   setShowBrandingPanel: (show) =>
     set((s) => ({ ui: { ...s.ui, showBrandingPanel: show } })),
+  setTextSelectMode: (on) =>
+    set((s) => ({ ui: { ...s.ui, textSelectMode: on, activeTool: on ? Tool.SELECT : s.ui.activeTool } })),
+  setDrawingDefaults: (d) =>
+    set((s) => ({ ui: { ...s.ui, drawingDefaults: { ...s.ui.drawingDefaults, ...d } } })),
+  setNewlyCreatedId: (id) => set((s) => ({ ui: { ...s.ui, newlyCreatedId: id } })),
   resetUI: () => set({ ui: initialUI }),
 })
