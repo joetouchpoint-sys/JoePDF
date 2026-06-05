@@ -3,6 +3,7 @@ import type { PDFDocumentProxy } from '@/lib/pdfRenderer'
 import { PDFPage } from './PDFPage'
 import { PageControls } from './PageControls'
 import { DrawingOptionsBar } from '@/components/toolbar/DrawingOptionsBar'
+import { SelectedAnnotationBar } from '@/components/toolbar/SelectedAnnotationBar'
 import { useStore } from '@/store'
 
 interface PDFViewerProps {
@@ -17,11 +18,17 @@ export function PDFViewer({ doc }: PDFViewerProps) {
   const setCurrentPage = useStore((s) => s.setCurrentPage)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Scroll to active page when currentPage changes externally (e.g. thumbnail click)
+  // Suppress observer updates while a programmatic scroll is in flight (thumbnail click)
+  const isProgrammaticScrollRef = useRef(false)
+
+  // Scroll to active page when currentPage changes externally (thumbnail click)
   useEffect(() => {
     const el = document.getElementById(`pdf-page-${currentPage}`)
     if (el) {
+      isProgrammaticScrollRef.current = true
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      const t = setTimeout(() => { isProgrammaticScrollRef.current = false }, 800)
+      return () => clearTimeout(t)
     }
   }, [currentPage])
 
@@ -32,6 +39,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
     observerRef.current?.disconnect()
     observerRef.current = new IntersectionObserver(
       (entries) => {
+        if (isProgrammaticScrollRef.current) return
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
@@ -40,7 +48,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
           if (!isNaN(idx)) setCurrentPage(idx)
         }
       },
-      { root: containerRef.current, threshold: 0.5 },
+      { root: containerRef.current, threshold: 0 },
     )
 
     document.querySelectorAll('[data-page-index]').forEach((el) => {
@@ -62,6 +70,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
     <div className="flex flex-col flex-1 min-h-0">
       <PageControls />
       <DrawingOptionsBar />
+      <SelectedAnnotationBar />
       <div
         ref={containerRef}
         id="pdf-viewer-container"

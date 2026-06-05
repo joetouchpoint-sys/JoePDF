@@ -11,6 +11,30 @@ import { usePDFDocument } from '@/hooks/usePDFDocument'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useStore } from '@/store'
 
+function AppFooter() {
+  const branding = useStore((s) => s.branding)
+  if (!branding.footerText && !branding.supportEmail) return null
+  return (
+    <footer className="h-7 flex-shrink-0 flex items-center justify-center gap-4 px-4 bg-white border-t border-slate-100">
+      {branding.footerText && (
+        <span className="text-xs text-slate-400">{branding.footerText}</span>
+      )}
+      {branding.footerText && branding.supportEmail && (
+        <span className="text-slate-200 text-xs">·</span>
+      )}
+      {branding.supportEmail && (
+        <a
+          href={`mailto:${branding.supportEmail}`}
+          className="text-xs hover:underline"
+          style={{ color: 'var(--color-primary)' }}
+        >
+          {branding.supportEmail}
+        </a>
+      )}
+    </footer>
+  )
+}
+
 function EditorContent() {
   const { doc, isLoading, error } = usePDFDocument()
   const hasPDF = useStore((s) => !!s.pdf.pdfBytes)
@@ -65,6 +89,7 @@ export function AppShell() {
       <div className="flex flex-col h-full overflow-hidden bg-slate-50">
         <Header />
         <EditorContent />
+        <AppFooter />
       </div>
       <BrandingConfigPanel />
       <SplitByGroupsDialog />

@@ -209,7 +209,10 @@ export function BrandingConfigPanel() {
         {/* Org / App name */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-slate-600 block mb-1">Organisation</label>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Organisation
+              <span className="text-[10px] text-slate-400 font-normal ml-1">(home screen)</span>
+            </label>
             <input
               type="text"
               value={branding.orgName}
@@ -218,7 +221,10 @@ export function BrandingConfigPanel() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-600 block mb-1">App name</label>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              App name
+              <span className="text-[10px] text-slate-400 font-normal ml-1">(header &amp; home screen)</span>
+            </label>
             <input
               type="text"
               value={branding.appName}
@@ -267,7 +273,10 @@ export function BrandingConfigPanel() {
         {/* Footer / support */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-slate-600 block mb-1">Footer text</label>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Footer text
+              <span className="text-[10px] text-slate-400 font-normal ml-1">(bottom of app)</span>
+            </label>
             <input
               type="text"
               value={branding.footerText}

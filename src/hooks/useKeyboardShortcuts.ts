@@ -46,20 +46,19 @@ export function useKeyboardShortcuts() {
         return
       }
 
-      // Ctrl+G — open split by groups dialog
-      if (ctrl && e.key === 'g') {
-        e.preventDefault()
-        const hasPDF = !!useStore.getState().pdf.pdfBytes
-        if (hasPDF) useStore.getState().setSplitByGroupsOpen(true)
-        return
-      }
-
       // Tool shortcuts
       if (!ctrl) {
         // Q — toggle text-select mode
         if (e.key === 'q' || e.key === 'Q') {
           const { ui, setTextSelectMode } = useStore.getState()
           setTextSelectMode(!ui.textSelectMode)
+          return
+        }
+
+        // G — open split by groups dialog
+        if (e.key === 'g' || e.key === 'G') {
+          const hasPDF = !!useStore.getState().pdf.pdfBytes
+          if (hasPDF) useStore.getState().setSplitByGroupsOpen(true)
           return
         }
 

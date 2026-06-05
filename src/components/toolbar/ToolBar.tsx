@@ -120,7 +120,7 @@ export function ToolBar() {
             Page tools
           </p>
         )}
-        <Tooltip content="Split PDF into equal-size page groups (Ctrl+G)" side="right">
+        <Tooltip content="Split PDF into equal-size page groups" shortcut="G" side="right">
           <button
             type="button"
             onClick={() => setSplitByGroupsOpen(true)}
@@ -136,7 +136,8 @@ export function ToolBar() {
             )}
           >
             <LayoutGrid className="w-4 h-4 flex-shrink-0" />
-            {expanded && 'Split by groups'}
+            {expanded && <span className="flex-1 truncate">Split by groups</span>}
+            {expanded && <span className="ml-auto text-[10px] opacity-40 flex-shrink-0">G</span>}
           </button>
         </Tooltip>
       </div>
@@ -148,7 +149,7 @@ export function ToolBar() {
             PDF text
           </p>
         )}
-        <Tooltip content="Select & copy text from PDF (Q)" side="right">
+        <Tooltip content="Select & copy text from PDF" shortcut="Q" side="right">
           <button
             type="button"
             onClick={() => setTextSelectMode(!textSelectMode)}
@@ -164,7 +165,12 @@ export function ToolBar() {
             )}
           >
             <MousePointerClick className="w-4 h-4 flex-shrink-0" />
-            {expanded && 'Select text'}
+            {expanded && <span className="flex-1 truncate">Select text</span>}
+            {expanded && (
+              <span className={clsx('ml-auto text-[10px] flex-shrink-0', textSelectMode ? 'opacity-70' : 'opacity-40')}>
+                Q
+              </span>
+            )}
           </button>
         </Tooltip>
       </div>

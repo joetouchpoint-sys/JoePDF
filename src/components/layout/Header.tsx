@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { Undo2, Redo2, Download, Settings2, X, FileText, FileType2, ChevronDown } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Undo2, Redo2, Download, Settings2, X, FileText } from 'lucide-react'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ConfirmDialog } from '@/components/ui/Dialog'
 import { useStore, resetAllState } from '@/store'
 import { useHistory } from '@/hooks/useHistory'
 import { exportPDF } from '@/lib/pdfExporter'
-import { exportToWord } from '@/lib/wordExporter'
 import { downloadFile } from '@/utils/fileUtils'
 import { showToast } from '@/components/ui/Toast'
 import { rasteriseRedactedPages } from '@/lib/redactionEngine'
@@ -26,8 +25,6 @@ export function Header() {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [showRedactConfirm, setShowRedactConfirm] = useState(false)
   const [pendingRedactCount, setPendingRedactCount] = useState(0)
-  const [exportMenuOpen, setExportMenuOpen] = useState(false)
-  const exportMenuRef = useRef<HTMLDivElement>(null)
 
   const annotationCount = useStore((s) => {
     let count = 0
@@ -37,17 +34,6 @@ export function Header() {
   useEffect(() => {
     if (annotationCount > 0) setIsDirty(true)
   }, [annotationCount, setIsDirty])
-
-  // Close export menu on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
-        setExportMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
 
   const checkForPendingRedactions = useCallback(() => {
     let count = 0
@@ -108,7 +94,6 @@ export function Header() {
   }, [setIsExporting, setIsDirty, setRasterisedPage])
 
   const handleExportClick = useCallback(() => {
-    setExportMenuOpen(false)
     const redactCount = checkForPendingRedactions()
     if (redactCount > 0) {
       setPendingRedactCount(redactCount)
@@ -117,27 +102,6 @@ export function Header() {
       void handleExport()
     }
   }, [checkForPendingRedactions, handleExport])
-
-  const handleWordExport = useCallback(async () => {
-    setExportMenuOpen(false)
-    const { pdf } = useStore.getState()
-    const doc = getCachedDocument()
-    if (!doc || !pdf.pdfBytes) return
-
-    setIsExporting(true)
-    showToast('Converting to Word — this may take a moment…', 'info', 6000)
-    try {
-      await exportToWord(doc, {
-        fileName: pdf.fileName ?? 'document',
-        pageOrder: pdf.pageOrder,
-      })
-      showToast('Word document downloaded. Pages are embedded as images.', 'success')
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Word export failed.', 'error')
-    } finally {
-      setIsExporting(false)
-    }
-  }, [setIsExporting])
 
   // Ctrl+S triggers PDF export — must be after handleExport declaration
   useEffect(() => {
@@ -250,64 +214,24 @@ export function Header() {
           </Tooltip>
 
           {hasPDF && (
-            <div ref={exportMenuRef} className="relative">
-              {/* Split button: primary action (PDF) + dropdown (Word) */}
-              <div className="flex rounded-md overflow-hidden">
-                <button
-                  type="button"
-                  onClick={handleExportClick}
-                  disabled={isExporting}
-                  aria-label="Download PDF"
-                  className={clsx(
-                    'flex items-center gap-1.5 px-3 h-8 text-sm font-semibold text-white transition-all',
-                    'disabled:opacity-60 disabled:pointer-events-none',
-                  )}
-                  style={{ backgroundColor: branding.primaryColor || '#178351' }}
-                >
-                  {isExporting ? (
-                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5" />
-                  )}
-                  Download PDF
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setExportMenuOpen((o) => !o)}
-                  disabled={isExporting}
-                  aria-label="More export options"
-                  aria-expanded={exportMenuOpen}
-                  className="flex items-center justify-center w-7 h-8 border-l border-white/20 text-white/80 hover:text-white hover:brightness-110 transition-all disabled:opacity-60 disabled:pointer-events-none"
-                  style={{ backgroundColor: branding.primaryColor || '#178351' }}
-                >
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {exportMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-50">
-                  <button
-                    type="button"
-                    onClick={handleExportClick}
-                    className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    <Download className="w-4 h-4 text-slate-400" />
-                    Download as PDF
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleWordExport}
-                    className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    <FileType2 className="w-4 h-4 text-blue-400" />
-                    <span>
-                      Download as Word
-                      <span className="block text-xs text-slate-400 leading-tight">Pages as images</span>
-                    </span>
-                  </button>
-                </div>
+            <button
+              type="button"
+              onClick={handleExportClick}
+              disabled={isExporting}
+              aria-label="Download PDF"
+              className={clsx(
+                'flex items-center gap-1.5 px-3 h-8 text-sm font-semibold text-white rounded-md transition-all',
+                'disabled:opacity-60 disabled:pointer-events-none',
               )}
-            </div>
+              style={{ backgroundColor: branding.primaryColor || '#178351' }}
+            >
+              {isExporting ? (
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5" />
+              )}
+              Download PDF
+            </button>
           )}
         </div>
       </header>
