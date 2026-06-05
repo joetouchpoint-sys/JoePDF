@@ -1,16 +1,18 @@
 import * as pdfjsLib from 'pdfjs-dist'
-import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist'
+import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 
-// Point the worker at pdfjs-dist's own worker bundle.
-// Vite resolves the import.meta.url form for node_modules assets automatically.
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
+/**
+ * Worker URL fixes for cross-browser compatibility:
+ * 1. Use import.meta.env.BASE_URL so the path is correct on GitHub Pages
+ *    (/JoePDF/pdf.worker.min.js) and in development (/pdf.worker.min.js).
+ * 2. Use .js extension — Chrome rejects .mjs workers served without an
+ *    explicit application/javascript Content-Type header (GitHub Pages omits it).
+ *
+ * The file is copied to dist/ by vite-plugin-static-copy (see vite.config.ts).
+ */
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`
 
 export type { PDFDocumentProxy, PDFPageProxy }
-
-let activeRenderTask: RenderTask | null = null
 
 /** Load a PDF from an ArrayBuffer. Returns the document proxy. */
 export async function loadDocument(buffer: ArrayBuffer): Promise<PDFDocumentProxy> {
@@ -20,54 +22,61 @@ export async function loadDocument(buffer: ArrayBuffer): Promise<PDFDocumentProx
   return loadingTask.promise
 }
 
-/** Get page dimensions in PDF user-space points without rendering. */
-export async function getPageInfo(
-  doc: PDFDocumentProxy,
-  pageNumber: number,
-): Promise<{ widthPt: number; heightPt: number }> {
-  const page = await doc.getPage(pageNumber)
-  const vp = page.getViewport({ scale: 1 })
-  const result = { widthPt: vp.width, heightPt: vp.height }
-  page.cleanup()
-  return result
+export interface RenderHandle {
+  promise: Promise<void>
+  cancel: () => void
 }
 
 /**
  * Render a PDF page onto the provided canvas element.
- * Cancels any in-flight render task before starting a new one.
+ *
+ * Returns a { promise, cancel } handle so each caller can independently
+ * cancel its own render without disrupting other pages. Previously a single
+ * module-level task was used, which caused pages to cancel each other during
+ * simultaneous rendering (visible as blank pages in Chrome).
  */
-export async function renderPageToCanvas(
+export function renderPageToCanvas(
   doc: PDFDocumentProxy,
   pageNumber: number,
   canvas: HTMLCanvasElement,
   scale: number,
-): Promise<void> {
-  if (activeRenderTask) {
-    activeRenderTask.cancel()
-    activeRenderTask = null
-  }
-
-  const page = await doc.getPage(pageNumber)
-  const viewport = page.getViewport({ scale })
-
-  canvas.width = Math.floor(viewport.width)
-  canvas.height = Math.floor(viewport.height)
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas 2D context unavailable')
-
+): RenderHandle {
+  let cancelled = false
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderTask = page.render({ canvasContext: ctx as any, viewport, canvas })
-  activeRenderTask = renderTask
+  let renderTask: any = null
 
-  try {
-    await renderTask.promise
-  } catch (err) {
-    if ((err as Error).message?.includes('Rendering cancelled')) return
-    throw err
-  } finally {
-    activeRenderTask = null
-    page.cleanup()
+  const promise = (async () => {
+    const page = await doc.getPage(pageNumber)
+    if (cancelled) { page.cleanup(); return }
+
+    const viewport = page.getViewport({ scale })
+    canvas.width = Math.floor(viewport.width)
+    canvas.height = Math.floor(viewport.height)
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) { page.cleanup(); throw new Error('Canvas 2D context unavailable') }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    renderTask = page.render({ canvasContext: ctx as any, viewport, canvas })
+
+    try {
+      await renderTask.promise
+    } catch (err) {
+      // Swallow cancellation — not an error
+      if (cancelled || (err as Error).message?.includes('Rendering cancelled')) return
+      throw err
+    } finally {
+      renderTask = null
+      page.cleanup()
+    }
+  })()
+
+  return {
+    promise,
+    cancel: () => {
+      cancelled = true
+      renderTask?.cancel()
+    },
   }
 }
 
@@ -99,8 +108,8 @@ export async function renderPageOffscreen(
 
   const htmlCanvas = canvas instanceof HTMLCanvasElement ? canvas : undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderTask = page.render({ canvasContext: ctx, viewport, canvas: htmlCanvas as any })
-  await renderTask.promise
+  const task = page.render({ canvasContext: ctx, viewport, canvas: htmlCanvas as any })
+  await task.promise
   page.cleanup()
   return canvas
 }

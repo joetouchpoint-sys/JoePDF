@@ -13,9 +13,11 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
+          // Rename .mjs → .js so GitHub Pages serves it with application/javascript
+          // MIME type. Chrome rejects workers with incorrect MIME types.
           src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
           dest: '',
-          rename: 'pdf.worker.min.mjs',
+          rename: 'pdf.worker.min.js',
         },
       ],
     }),

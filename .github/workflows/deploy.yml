@@ -23,7 +23,7 @@ jobs:
         run: npm ci
 
       - name: Build for GitHub Pages
-        run: npx tsc -b && npx vite build --base /JoePDF/
+        run: npx tsc -b && npx vite build --base /
 
       - name: Verify build output
         run: |
@@ -40,4 +40,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          cname: joepdf.online
           force_orphan: true

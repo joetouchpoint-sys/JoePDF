@@ -10,49 +10,69 @@ interface PDFThumbnailProps {
   pageNumber: number
   pageIndex: number
   isActive: boolean
-  onClick: () => void
+  isSelected: boolean
+  onClick: (e: React.MouseEvent) => void
 }
 
-export function PDFThumbnail({ doc, pageNumber, pageIndex, isActive, onClick }: PDFThumbnailProps) {
+export function PDFThumbnail({
+  doc, pageNumber, pageIndex, isActive, isSelected, onClick,
+}: PDFThumbnailProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    let cancelled = false
+
+    let scale = THUMB_WIDTH / 595 // default A4 until page loads
+    let handle = { cancel: () => {} }
 
     doc.getPage(pageNumber).then((page) => {
-      if (cancelled) return
       const vp = page.getViewport({ scale: 1 })
-      const scale = THUMB_WIDTH / vp.width
+      scale = THUMB_WIDTH / vp.width
       page.cleanup()
-      return renderPageToCanvas(doc, pageNumber, canvas, scale)
+      handle = renderPageToCanvas(doc, pageNumber, canvas, scale)
+      return handle.promise
     }).catch(() => {})
 
-    return () => { cancelled = true }
+    return () => handle.cancel()
   }, [doc, pageNumber])
 
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Go to page ${pageIndex + 1}`}
+      aria-label={`Page ${pageIndex + 1}${isSelected ? ' (selected)' : ''}`}
       aria-current={isActive ? 'true' : undefined}
+      aria-pressed={isSelected}
       className={clsx(
         'flex flex-col items-center gap-1.5 p-1.5 rounded-lg transition-all w-full',
         'hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-        isActive && 'bg-blue-50',
+        isActive && !isSelected && 'bg-blue-50',
+        isSelected && 'bg-green-50',
       )}
     >
       <div className={clsx(
-        'rounded overflow-hidden shadow-sm border transition-all',
-        isActive ? 'border-[--color-primary] shadow-blue-100' : 'border-slate-200',
+        'rounded overflow-hidden shadow-sm border-2 transition-all relative',
+        isSelected
+          ? 'border-[--color-primary] shadow-green-100'
+          : isActive
+            ? 'border-blue-400 shadow-blue-100'
+            : 'border-slate-200',
       )}>
         <canvas ref={canvasRef} style={{ display: 'block', width: THUMB_WIDTH }} />
+        {/* Selection tick */}
+        {isSelected && (
+          <div
+            className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          >
+            ✓
+          </div>
+        )}
       </div>
       <span className={clsx(
         'text-xs tabular-nums',
-        isActive ? 'text-[--color-primary] font-semibold' : 'text-slate-500',
+        isSelected ? 'text-[--color-primary] font-semibold' : isActive ? 'text-blue-600 font-semibold' : 'text-slate-500',
       )}>
         {pageIndex + 1}
       </span>

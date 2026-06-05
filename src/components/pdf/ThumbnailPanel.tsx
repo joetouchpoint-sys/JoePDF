@@ -9,7 +9,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   GripVertical, RotateCcw, RotateCw, Trash2, Copy, Download,
-  FilePlus, Scissors,
+  FilePlus, Scissors, X,
 } from 'lucide-react'
 import type { PDFDocumentProxy } from '@/lib/pdfRenderer'
 import { PDFThumbnail } from './PDFThumbnail'
@@ -31,7 +31,8 @@ interface SortableThumbProps {
   pageNumber: number
   pageIndex: number
   isActive: boolean
-  onClick: () => void
+  isSelected: boolean
+  onThumbClick: (e: React.MouseEvent) => void
   onRotateCW: () => void
   onRotateCCW: () => void
   onDelete: () => void
@@ -41,7 +42,7 @@ interface SortableThumbProps {
 }
 
 function SortableThumb({
-  id, doc, pageNumber, pageIndex, isActive, onClick,
+  id, doc, pageNumber, pageIndex, isActive, isSelected, onThumbClick,
   onRotateCW, onRotateCCW, onDelete, onDuplicate, onExtract, canDelete,
 }: SortableThumbProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
@@ -67,7 +68,8 @@ function SortableThumb({
         pageNumber={pageNumber}
         pageIndex={pageIndex}
         isActive={isActive}
-        onClick={onClick}
+        isSelected={isSelected}
+        onClick={onThumbClick}
       />
 
       {/* Action buttons — appear on hover */}
@@ -195,6 +197,9 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
   const annotations = useStore((s) => s.annotations)
   const { dispatch } = useHistory()
 
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(() => new Set())
+  const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null)
+  const [isExtracting, setIsExtracting] = useState(false)
   const [showSplit, setShowSplit] = useState(false)
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
   const [isMerging, setIsMerging] = useState(false)
@@ -212,9 +217,35 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
       const newIndex = pageOrder.findIndex((_, i) => `page-${i}` === over.id)
       if (oldIndex < 0 || newIndex < 0) return
       dispatch(new ReorderPagesCommand(pageOrder, arrayMove(pageOrder, oldIndex, newIndex)))
+      setSelectedIndices(new Set())
     },
     [pageOrder, dispatch],
   )
+
+  const handleThumbClick = useCallback((i: number, e: React.MouseEvent) => {
+    setCurrentPage(i)
+    if (e.shiftKey && lastClickedIndex !== null) {
+      // Range select from anchor to i — replace current selection
+      const min = Math.min(i, lastClickedIndex)
+      const max = Math.max(i, lastClickedIndex)
+      const next = new Set<number>()
+      for (let j = min; j <= max; j++) next.add(j)
+      setSelectedIndices(next)
+    } else if (e.ctrlKey || e.metaKey) {
+      // Toggle individual page
+      setSelectedIndices(prev => {
+        const next = new Set(prev)
+        if (next.has(i)) next.delete(i)
+        else next.add(i)
+        return next
+      })
+      setLastClickedIndex(i)
+    } else {
+      // Plain click — navigate only, clear selection
+      setSelectedIndices(new Set())
+      setLastClickedIndex(i)
+    }
+  }, [lastClickedIndex, setCurrentPage])
 
   const handleRotate = (pageIndex: number, direction: 1 | -1) => {
     const current = pageRotations.get(pageIndex) ?? 0
@@ -234,12 +265,16 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
     if (currentPage >= newOrder.length) setCurrentPage(Math.max(0, newOrder.length - 1))
     showToast('Page deleted.', 'success')
     setDeleteIndex(null)
+    setSelectedIndices(prev => {
+      const next = new Set(prev)
+      next.delete(pageIndex)
+      return next
+    })
   }
 
   const handleExtract = async (pageIndex: number) => {
     if (!pdfBytes) return
     try {
-      // Use direct pdf-lib extraction (splitPDF requires at least 2 parts)
       const { PDFDocument } = await import('pdf-lib')
       const srcDoc = await PDFDocument.load(pdfBytes)
       const outDoc = await PDFDocument.create()
@@ -251,6 +286,33 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
       showToast(`Page ${pageIndex + 1} extracted.`, 'success')
     } catch {
       showToast('Failed to extract page.', 'error')
+    }
+  }
+
+  const handleExtractSelected = async () => {
+    if (!pdfBytes || selectedIndices.size === 0) return
+    setIsExtracting(true)
+    try {
+      const { PDFDocument } = await import('pdf-lib')
+      const srcDoc = await PDFDocument.load(pdfBytes)
+      const outDoc = await PDFDocument.create()
+      const sorted = Array.from(selectedIndices).sort((a, b) => a - b)
+      const srcPageIndices = sorted.map(i => pageOrder[i] ?? i)
+      const pages = await outDoc.copyPages(srcDoc, srcPageIndices)
+      pages.forEach(p => outDoc.addPage(p))
+      const bytes = await outDoc.save()
+      const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+      const base = (fileName ?? 'document').replace(/\.pdf$/i, '')
+      const label = sorted.length <= 4
+        ? sorted.map(i => i + 1).join('-')
+        : `${sorted[0]! + 1}-to-${sorted[sorted.length - 1]! + 1}`
+      downloadFile(new Uint8Array(ab), `${base}-pages-${label}.pdf`)
+      showToast(`${selectedIndices.size} page${selectedIndices.size > 1 ? 's' : ''} extracted.`, 'success')
+      setSelectedIndices(new Set())
+    } catch {
+      showToast('Failed to extract pages.', 'error')
+    } finally {
+      setIsExtracting(false)
     }
   }
 
@@ -298,40 +360,82 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
     mergeInputRef.current.click()
   }
 
+  const hasSelection = selectedIndices.size > 0
   const ids = Array.from({ length: pageCount }, (_, i) => `page-${i}`)
 
   return (
     <>
-      {/* Panel header with merge/split actions */}
-      <div className="flex items-center justify-between px-2 pt-2 pb-1 border-b border-slate-100">
-        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-          Pages ({pageCount})
-        </span>
-        <div className="flex gap-0.5">
-          <button
-            type="button"
-            onClick={handleMerge}
-            disabled={isMerging}
-            title="Merge another PDF"
-            className={clsx(
-              'w-6 h-6 rounded flex items-center justify-center transition-colors',
-              'text-slate-400 hover:text-[--color-primary] hover:bg-slate-100',
-              isMerging && 'opacity-50',
+      {/* Panel header */}
+      <div className="border-b border-slate-100">
+        <div className="flex items-center justify-between px-2 pt-2 pb-1">
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            Pages ({pageCount})
+          </span>
+          <div className="flex gap-0.5">
+            {hasSelection ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void handleExtractSelected()}
+                  disabled={isExtracting}
+                  title={`Download ${selectedIndices.size} selected page${selectedIndices.size > 1 ? 's' : ''} as PDF`}
+                  className={clsx(
+                    'flex items-center gap-1 px-2 h-6 rounded text-[10px] font-semibold text-white transition-colors',
+                    isExtracting ? 'opacity-50' : 'hover:opacity-90',
+                  )}
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                  <Download className="w-3 h-3" />
+                  {isExtracting ? '…' : `${selectedIndices.size} page${selectedIndices.size > 1 ? 's' : ''}`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedIndices(new Set()); setLastClickedIndex(null) }}
+                  title="Clear selection"
+                  className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleMerge}
+                  disabled={isMerging}
+                  title="Merge another PDF"
+                  className={clsx(
+                    'w-6 h-6 rounded flex items-center justify-center transition-colors',
+                    'text-slate-400 hover:text-[--color-primary] hover:bg-slate-100',
+                    isMerging && 'opacity-50',
+                  )}
+                >
+                  <FilePlus className="w-3.5 h-3.5" />
+                </button>
+                {pageCount > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSplit(true)}
+                    title="Split PDF"
+                    className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-[--color-primary] hover:bg-slate-100 transition-colors"
+                  >
+                    <Scissors className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </>
             )}
-          >
-            <FilePlus className="w-3.5 h-3.5" />
-          </button>
-          {pageCount > 1 && (
-            <button
-              type="button"
-              onClick={() => setShowSplit(true)}
-              title="Split PDF"
-              className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-[--color-primary] hover:bg-slate-100 transition-colors"
-            >
-              <Scissors className="w-3.5 h-3.5" />
-            </button>
-          )}
+          </div>
         </div>
+        {hasSelection && (
+          <p className="px-2 pb-1.5 text-[10px] text-slate-400">
+            Shift+click to extend · Ctrl+click to toggle
+          </p>
+        )}
+        {!hasSelection && (
+          <p className="px-2 pb-1.5 text-[10px] text-slate-400">
+            Ctrl+click or Shift+click to select pages
+          </p>
+        )}
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -350,7 +454,8 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
                   pageNumber={originalPageNum}
                   pageIndex={i}
                   isActive={i === currentPage}
-                  onClick={() => setCurrentPage(i)}
+                  isSelected={selectedIndices.has(i)}
+                  onThumbClick={(e) => handleThumbClick(i, e)}
                   onRotateCW={() => handleRotate(i, 1)}
                   onRotateCCW={() => handleRotate(i, -1)}
                   onDuplicate={() => handleDuplicate(i)}

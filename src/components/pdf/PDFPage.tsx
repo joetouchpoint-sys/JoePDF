@@ -24,22 +24,23 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    let cancelled = false
+
     setIsRendering(true)
 
-    doc.getPage(pageNumber).then((proxy) => {
-      if (cancelled) return
-      setPageProxy(proxy)
-      return renderPageToCanvas(doc, pageNumber, canvas, scale)
-    }).then(() => {
-      if (cancelled) return
+    // Each page gets its own independent render handle — no cross-page cancellations
+    const handle = renderPageToCanvas(doc, pageNumber, canvas, scale)
+
+    // Get the page proxy for the text layer (separate from the render)
+    doc.getPage(pageNumber).then((proxy) => setPageProxy(proxy)).catch(() => {})
+
+    handle.promise.then(() => {
       setDimensions({ width: canvas.width, height: canvas.height })
       setIsRendering(false)
     }).catch(() => {
-      if (!cancelled) setIsRendering(false)
+      setIsRendering(false)
     })
 
-    return () => { cancelled = true }
+    return () => handle.cancel()
   }, [doc, pageNumber, scale])
 
   return (
@@ -62,7 +63,6 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
 
       {!isRendering && dimensions.width > 0 && (
         <>
-          {/* Annotation canvas — sits above PDF, below text layer when text select active */}
           <div
             style={{
               position: 'absolute',
@@ -78,7 +78,6 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
             />
           </div>
 
-          {/* Text layer — allows selecting/copying PDF text */}
           {pageProxy && (
             <PDFTextLayer
               page={pageProxy}
@@ -92,7 +91,10 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
       )}
 
       {isActive && (
-        <div className="absolute inset-0 ring-2 ring-[--color-primary] ring-offset-1 pointer-events-none" style={{ zIndex: 30 }} />
+        <div
+          className="absolute inset-0 ring-2 ring-[--color-primary] ring-offset-1 pointer-events-none"
+          style={{ zIndex: 30 }}
+        />
       )}
     </div>
   )
