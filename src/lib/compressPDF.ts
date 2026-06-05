@@ -7,9 +7,10 @@ export interface CompressResult {
   savingsPercent: number
 }
 
-export async function compressPDF(pdfBytes: Uint8Array): Promise<CompressResult> {
-  const originalSize = pdfBytes.byteLength
-  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+export async function compressPDF(pdfBytes: ArrayBuffer | Uint8Array): Promise<CompressResult> {
+  const bytes = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes)
+  const originalSize = bytes.byteLength
+  const doc = await PDFDocument.load(bytes, { ignoreEncryption: true })
   const compressed = await doc.save({ useObjectStreams: true })
   const compressedSize = compressed.byteLength
   const savingsPercent = Math.max(0, Math.round((1 - compressedSize / originalSize) * 100))

@@ -160,7 +160,7 @@ export function SignatureDialog() {
       await new Promise<void>((resolve) => {
         const img = new Image()
         img.onload = () => { natW = img.naturalWidth; natH = img.naturalHeight; resolve() }
-        img.onerror = resolve
+        img.onerror = () => resolve()
         img.src = uploadedSrc
       })
     }
