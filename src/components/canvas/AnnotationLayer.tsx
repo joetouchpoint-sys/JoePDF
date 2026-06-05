@@ -34,6 +34,7 @@ interface AnnotationLayerProps {
 export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerProps) {
   const activeTool = useStore((s) => s.ui.activeTool)
   const textSelectMode = useStore((s) => s.ui.textSelectMode)
+  const zoom = useStore((s) => s.ui.zoom)
   const selectedId = useStore((s) => s.ui.selectedAnnotationId)
   const newlyCreatedId = useStore((s) => s.ui.newlyCreatedId)
   const setSelectedId = useStore((s) => s.setSelectedAnnotationId)
@@ -62,9 +63,11 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     return () => window.removeEventListener('joepdf:delete-selected', handler)
   }, [annotations, pageIndex, dispatch, setSelectedId])
 
+  // Use getRelativePointerPosition to get coordinates in stage space (PDF units).
+  // The Stage has scaleX/scaleY = zoom, so relative position = canvas_px / zoom = PDF units.
   const getPos = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()
-    const pos = stage?.getPointerPosition()
+    const pos = stage?.getRelativePointerPosition()
     return pos ?? { x: 0, y: 0 }
   }, [])
 
@@ -217,6 +220,10 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       ref={stageRef}
       width={width}
       height={height}
+      // Scale the Konva coordinate system so 1 stage unit = 1 PDF user-space unit.
+      // Annotations are stored in PDF units; the stage renders them at zoom×zoom scale.
+      scaleX={zoom}
+      scaleY={zoom}
       style={{
         position: 'absolute',
         top: 0,

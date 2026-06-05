@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -7,12 +7,23 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import {
+  GripVertical, RotateCcw, RotateCw, Trash2, Copy, Download,
+  FilePlus, Scissors,
+} from 'lucide-react'
 import type { PDFDocumentProxy } from '@/lib/pdfRenderer'
 import { PDFThumbnail } from './PDFThumbnail'
 import { useStore } from '@/store'
 import { ReorderPagesCommand } from '@/commands/ReorderPagesCommand'
+import { DeletePageCommand } from '@/commands/DeletePageCommand'
+import { DuplicatePageCommand } from '@/commands/DuplicatePageCommand'
 import { useHistory } from '@/hooks/useHistory'
-import { GripVertical } from 'lucide-react'
+import { mergePDF, splitPDF } from '@/lib/pdfMerger'
+import { deletePageAt, duplicatePage } from '@/lib/pageManager'
+import { downloadFile, isPdfBuffer } from '@/utils/fileUtils'
+import { showToast } from '@/components/ui/Toast'
+import { ConfirmDialog } from '@/components/ui/Dialog'
+import { clsx } from 'clsx'
 
 interface SortableThumbProps {
   id: string
@@ -21,25 +32,36 @@ interface SortableThumbProps {
   pageIndex: number
   isActive: boolean
   onClick: () => void
+  onRotateCW: () => void
+  onRotateCCW: () => void
+  onDelete: () => void
+  onDuplicate: () => void
+  onExtract: () => void
+  canDelete: boolean
 }
 
-function SortableThumb({ id, doc, pageNumber, pageIndex, isActive, onClick }: SortableThumbProps) {
+function SortableThumb({
+  id, doc, pageNumber, pageIndex, isActive, onClick,
+  onRotateCW, onRotateCCW, onDelete, onDuplicate, onExtract, canDelete,
+}: SortableThumbProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
 
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
-      className="relative group"
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      className="relative group w-full"
     >
+      {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10 p-0.5"
+        className="absolute left-0 top-[40%] -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 z-10 px-0.5"
         aria-label="Drag to reorder"
       >
         <GripVertical className="w-3 h-3" />
       </div>
+
       <PDFThumbnail
         doc={doc}
         pageNumber={pageNumber}
@@ -47,6 +69,110 @@ function SortableThumb({ id, doc, pageNumber, pageIndex, isActive, onClick }: So
         isActive={isActive}
         onClick={onClick}
       />
+
+      {/* Action buttons — appear on hover */}
+      <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={onRotateCCW}
+          title="Rotate left"
+          className="w-6 h-6 bg-white/90 border border-slate-200 rounded flex items-center justify-center text-slate-500 hover:text-[--color-primary] hover:border-[--color-primary] shadow-sm transition-colors"
+        >
+          <RotateCcw className="w-3 h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={onRotateCW}
+          title="Rotate right"
+          className="w-6 h-6 bg-white/90 border border-slate-200 rounded flex items-center justify-center text-slate-500 hover:text-[--color-primary] hover:border-[--color-primary] shadow-sm transition-colors"
+        >
+          <RotateCw className="w-3 h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={onDuplicate}
+          title="Duplicate page"
+          className="w-6 h-6 bg-white/90 border border-slate-200 rounded flex items-center justify-center text-slate-500 hover:text-[--color-primary] hover:border-[--color-primary] shadow-sm transition-colors"
+        >
+          <Copy className="w-3 h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={onExtract}
+          title="Extract this page"
+          className="w-6 h-6 bg-white/90 border border-slate-200 rounded flex items-center justify-center text-slate-500 hover:text-[--color-primary] hover:border-[--color-primary] shadow-sm transition-colors"
+        >
+          <Download className="w-3 h-3" />
+        </button>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Delete page"
+            className="w-6 h-6 bg-white/90 border border-slate-200 rounded flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-300 shadow-sm transition-colors"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface SplitDialogProps {
+  open: boolean
+  pageCount: number
+  onClose: () => void
+  onConfirm: (splitAfter: number) => void
+}
+
+function SplitDialog({ open, pageCount, onClose, onConfirm }: SplitDialogProps) {
+  const [splitAfter, setSplitAfter] = useState(1)
+
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-white rounded-xl shadow-xl w-80 mx-4 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h3 className="font-semibold text-slate-800">Split PDF</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Creates two separate PDF files</p>
+        </div>
+        <div className="px-5 py-4">
+          <label className="block text-sm text-slate-600 mb-2">
+            Split after page
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={1}
+              max={pageCount - 1}
+              value={splitAfter}
+              onChange={(e) => setSplitAfter(Number(e.target.value))}
+              className="flex-1"
+            />
+            <span className="text-sm font-semibold text-[--color-primary] w-8 text-center">{splitAfter}</span>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">
+            Part 1: pages 1–{splitAfter} · Part 2: pages {splitAfter + 1}–{pageCount}
+          </p>
+        </div>
+        <div className="flex gap-2 px-5 pb-4">
+          <button onClick={onClose} className="flex-1 border border-slate-200 rounded-lg py-2 text-sm text-slate-600 hover:bg-slate-50">
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(splitAfter - 1)}
+            className="flex-1 rounded-lg py-2 text-sm font-semibold text-white"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          >
+            Split &amp; download
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -59,8 +185,20 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
   const pageCount = useStore((s) => s.pdf.pageCount)
   const pageOrder = useStore((s) => s.pdf.pageOrder)
   const currentPage = useStore((s) => s.ui.currentPage)
+  const _pageMeta = useStore((s) => s.pdf.pageMeta); void _pageMeta
+  const pdfBytes = useStore((s) => s.pdf.pdfBytes)
+  const fileName = useStore((s) => s.pdf.fileName)
+  const pageRotations = useStore((s) => s.ui.pageRotations)
   const setCurrentPage = useStore((s) => s.setCurrentPage)
+  const setPageRotation = useStore((s) => s.setPageRotation)
+  const setPdfBytes = useStore((s) => s.setPdfBytes)
+  const annotations = useStore((s) => s.annotations)
   const { dispatch } = useHistory()
+
+  const [showSplit, setShowSplit] = useState(false)
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
+  const [isMerging, setIsMerging] = useState(false)
+  const mergeInputRef = useRef<HTMLInputElement | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -70,42 +208,178 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
     (event: DragEndEvent) => {
       const { active, over } = event
       if (!over || active.id === over.id) return
-
       const oldIndex = pageOrder.findIndex((_, i) => `page-${i}` === active.id)
       const newIndex = pageOrder.findIndex((_, i) => `page-${i}` === over.id)
       if (oldIndex < 0 || newIndex < 0) return
-
-      const newOrder = arrayMove(pageOrder, oldIndex, newIndex)
-      dispatch(new ReorderPagesCommand(pageOrder, newOrder))
+      dispatch(new ReorderPagesCommand(pageOrder, arrayMove(pageOrder, oldIndex, newIndex)))
     },
     [pageOrder, dispatch],
   )
 
+  const handleRotate = (pageIndex: number, direction: 1 | -1) => {
+    const current = pageRotations.get(pageIndex) ?? 0
+    setPageRotation(pageIndex, (current + direction * 90 + 360) % 360)
+  }
+
+  const handleDuplicate = (pageIndex: number) => {
+    const newOrder = duplicatePage(pageOrder, pageIndex)
+    dispatch(new DuplicatePageCommand(pageOrder, newOrder))
+    showToast('Page duplicated.', 'success')
+  }
+
+  const handleDelete = (pageIndex: number) => {
+    const newOrder = deletePageAt(pageOrder, pageIndex)
+    const anns = annotations.get(pageIndex) ?? []
+    dispatch(new DeletePageCommand(pageIndex, pageOrder, newOrder, anns))
+    if (currentPage >= newOrder.length) setCurrentPage(Math.max(0, newOrder.length - 1))
+    showToast('Page deleted.', 'success')
+    setDeleteIndex(null)
+  }
+
+  const handleExtract = async (pageIndex: number) => {
+    if (!pdfBytes) return
+    try {
+      // Use direct pdf-lib extraction (splitPDF requires at least 2 parts)
+      const { PDFDocument } = await import('pdf-lib')
+      const srcDoc = await PDFDocument.load(pdfBytes)
+      const outDoc = await PDFDocument.create()
+      const [p] = await outDoc.copyPages(srcDoc, [pageOrder[pageIndex] ?? pageIndex])
+      if (p) outDoc.addPage(p)
+      const bytes = await outDoc.save()
+      const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+      downloadFile(new Uint8Array(ab), `page-${pageIndex + 1}.pdf`)
+      showToast(`Page ${pageIndex + 1} extracted.`, 'success')
+    } catch {
+      showToast('Failed to extract page.', 'error')
+    }
+  }
+
+  const handleSplit = async (splitAfterLogical: number) => {
+    if (!pdfBytes) return
+    setShowSplit(false)
+    try {
+      const [b1, b2] = await splitPDF(pdfBytes, pageOrder, splitAfterLogical)
+      const base = (fileName ?? 'document').replace(/\.pdf$/i, '')
+      downloadFile(new Uint8Array(b1), `${base}-part1.pdf`)
+      downloadFile(new Uint8Array(b2), `${base}-part2.pdf`)
+      showToast('Split into two files — check your downloads.', 'success')
+    } catch {
+      showToast('Failed to split PDF.', 'error')
+    }
+  }
+
+  const handleMerge = () => {
+    if (!mergeInputRef.current) {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'application/pdf,.pdf'
+      input.onchange = async () => {
+        const file = input.files?.[0]
+        if (!file || !pdfBytes) return
+        setIsMerging(true)
+        try {
+          const appendBytes = await file.arrayBuffer()
+          if (!isPdfBuffer(appendBytes)) {
+            showToast('Selected file is not a valid PDF.', 'error')
+            return
+          }
+          const merged = await mergePDF(pdfBytes, appendBytes)
+          const newName = (fileName ?? 'document').replace(/\.pdf$/i, '') + '-merged.pdf'
+          setPdfBytes(merged, newName)
+          showToast(`Merged ${file.name} — ${pageCount} + new pages.`, 'success')
+        } catch {
+          showToast('Failed to merge PDFs.', 'error')
+        } finally {
+          setIsMerging(false)
+        }
+      }
+      mergeInputRef.current = input
+    }
+    mergeInputRef.current.click()
+  }
+
   const ids = Array.from({ length: pageCount }, (_, i) => `page-${i}`)
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <nav
-          aria-label="Page thumbnails"
-          className="flex flex-col items-center gap-1 px-2 py-3"
-        >
-          {Array.from({ length: pageCount }, (_, i) => {
-            const originalPageNum = (pageOrder[i] ?? i) + 1
-            return (
-              <SortableThumb
-                key={`page-${i}`}
-                id={`page-${i}`}
-                doc={doc}
-                pageNumber={originalPageNum}
-                pageIndex={i}
-                isActive={i === currentPage}
-                onClick={() => setCurrentPage(i)}
-              />
-            )
-          })}
-        </nav>
-      </SortableContext>
-    </DndContext>
+    <>
+      {/* Panel header with merge/split actions */}
+      <div className="flex items-center justify-between px-2 pt-2 pb-1 border-b border-slate-100">
+        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          Pages ({pageCount})
+        </span>
+        <div className="flex gap-0.5">
+          <button
+            type="button"
+            onClick={handleMerge}
+            disabled={isMerging}
+            title="Merge another PDF"
+            className={clsx(
+              'w-6 h-6 rounded flex items-center justify-center transition-colors',
+              'text-slate-400 hover:text-[--color-primary] hover:bg-slate-100',
+              isMerging && 'opacity-50',
+            )}
+          >
+            <FilePlus className="w-3.5 h-3.5" />
+          </button>
+          {pageCount > 1 && (
+            <button
+              type="button"
+              onClick={() => setShowSplit(true)}
+              title="Split PDF"
+              className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-[--color-primary] hover:bg-slate-100 transition-colors"
+            >
+              <Scissors className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <nav
+            aria-label="Page thumbnails"
+            className="flex flex-col items-center gap-1 px-2 py-2"
+          >
+            {Array.from({ length: pageCount }, (_, i) => {
+              const originalPageNum = (pageOrder[i] ?? i) + 1
+              return (
+                <SortableThumb
+                  key={`page-${i}`}
+                  id={`page-${i}`}
+                  doc={doc}
+                  pageNumber={originalPageNum}
+                  pageIndex={i}
+                  isActive={i === currentPage}
+                  onClick={() => setCurrentPage(i)}
+                  onRotateCW={() => handleRotate(i, 1)}
+                  onRotateCCW={() => handleRotate(i, -1)}
+                  onDuplicate={() => handleDuplicate(i)}
+                  onExtract={() => void handleExtract(i)}
+                  onDelete={() => setDeleteIndex(i)}
+                  canDelete={pageCount > 1}
+                />
+              )
+            })}
+          </nav>
+        </SortableContext>
+      </DndContext>
+
+      <SplitDialog
+        open={showSplit}
+        pageCount={pageCount}
+        onClose={() => setShowSplit(false)}
+        onConfirm={(n) => void handleSplit(n)}
+      />
+
+      <ConfirmDialog
+        open={deleteIndex !== null}
+        onClose={() => setDeleteIndex(null)}
+        onConfirm={() => deleteIndex !== null && handleDelete(deleteIndex)}
+        title="Delete page?"
+        message={`Page ${(deleteIndex ?? 0) + 1} will be removed. You can undo this.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+      />
+    </>
   )
 }

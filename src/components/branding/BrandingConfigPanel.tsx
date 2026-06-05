@@ -1,8 +1,11 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useStore } from '@/store'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { showToast } from '@/components/ui/Toast'
+import { AdminLogin, ChangeCredsForm } from '@/components/ui/AdminLogin'
+import { isAdminSession, setAdminSession } from '@/lib/adminAuth'
+import { LogOut, ShieldCheck } from 'lucide-react'
 
 export function BrandingConfigPanel() {
   const showPanel = useStore((s) => s.ui.showBrandingPanel)
@@ -12,22 +15,54 @@ export function BrandingConfigPanel() {
   const resetBranding = useStore((s) => s.resetBranding)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [authed, setAuthed] = useState(() => isAdminSession())
+  const [showChangeCreds, setShowChangeCreds] = useState(false)
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) {
-      showToast('Please select an image file.', 'error')
-      return
-    }
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return }
     const reader = new FileReader()
     reader.onload = () => setBranding({ logoDataUrl: reader.result as string })
     reader.readAsDataURL(file)
     e.target.value = ''
   }
 
+  const handleLogout = () => {
+    setAdminSession(false)
+    setAuthed(false)
+    setShowPanel(false)
+  }
+
+  // Gate: show login if not authenticated
+  if (showPanel && !authed) {
+    return (
+      <AdminLogin
+        onSuccess={() => setAuthed(true)}
+        onCancel={() => setShowPanel(false)}
+      />
+    )
+  }
+
   return (
-    <Dialog open={showPanel} onClose={() => setShowPanel(false)} title="Branding & Settings" className="max-w-sm">
+    <Dialog open={showPanel} onClose={() => setShowPanel(false)} title="Branding & Settings">
       <div className="flex flex-col gap-4">
+        {/* Admin badge */}
+        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-1.5 text-green-700 text-xs font-medium">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Admin access
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 transition-colors"
+          >
+            <LogOut className="w-3 h-3" />
+            Sign out
+          </button>
+        </div>
+
         <div>
           <label className="text-xs font-medium text-slate-600 block mb-1">Organisation name</label>
           <input
@@ -64,7 +99,7 @@ export function BrandingConfigPanel() {
             )}
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} />
-          <p className="text-xs text-slate-400 mt-1">PNG or SVG, max 200×60 px recommended.</p>
+          <p className="text-xs text-slate-400 mt-1">PNG or SVG — recommended max 200×60 px.</p>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -73,14 +108,12 @@ export function BrandingConfigPanel() {
               <label className="text-xs text-slate-500 block mb-1 capitalize">
                 {key.replace('Color', '')}
               </label>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="color"
-                  value={branding[key]}
-                  onChange={(e) => setBranding({ [key]: e.target.value })}
-                  className="w-8 h-8 rounded cursor-pointer border border-slate-200"
-                />
-              </div>
+              <input
+                type="color"
+                value={branding[key]}
+                onChange={(e) => setBranding({ [key]: e.target.value })}
+                className="w-8 h-8 rounded cursor-pointer border border-slate-200"
+              />
             </div>
           ))}
         </div>
@@ -107,8 +140,21 @@ export function BrandingConfigPanel() {
           />
         </div>
 
+        {/* Change admin credentials */}
+        {showChangeCreds ? (
+          <ChangeCredsForm onDone={() => setShowChangeCreds(false)} />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowChangeCreds(true)}
+            className="text-xs text-slate-400 hover:text-slate-600 underline text-left"
+          >
+            Change admin credentials
+          </button>
+        )}
+
         <div className="flex justify-between pt-2 border-t border-slate-100">
-          <Button variant="ghost" size="sm" onClick={() => { resetBranding(); showToast('Branding reset.', 'success') }}>
+          <Button variant="ghost" size="sm" onClick={() => { resetBranding(); showToast('Branding reset to defaults.', 'success') }}>
             Reset defaults
           </Button>
           <Button
@@ -116,7 +162,7 @@ export function BrandingConfigPanel() {
             size="sm"
             onClick={() => { setShowPanel(false); showToast('Settings saved.', 'success') }}
           >
-            Save
+            Save &amp; close
           </Button>
         </div>
       </div>

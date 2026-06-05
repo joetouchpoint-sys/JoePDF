@@ -156,33 +156,26 @@ export function Header() {
         className="h-12 flex-shrink-0 flex items-center gap-3 px-4 select-none"
         style={{ backgroundColor: headerBg }}
       >
-        {/* Logo / brand */}
-        <div className="flex items-center gap-2.5 min-w-0 flex-shrink-0">
+        {/* Logo / brand — compact single-line to avoid header overflow */}
+        <div className="flex items-center gap-2 flex-shrink-0 min-w-0 max-w-[200px]">
           {branding.logoDataUrl ? (
-            <img src={branding.logoDataUrl} alt={branding.orgName} className="h-8 w-auto" />
+            <img src={branding.logoDataUrl} alt={branding.orgName} className="h-7 w-auto max-w-[120px] object-contain" />
           ) : (
-            <div className="flex items-center gap-2">
+            <>
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: branding.primaryColor || '#178351' }}
               >
-                <FileText className="w-4 h-4 text-white" />
+                <FileText className="w-3.5 h-3.5 text-white" />
               </div>
-              <div className="hidden sm:flex flex-col leading-none">
-                <span
-                  className="text-xs font-medium opacity-70"
-                  style={{ color: 'white', fontFamily: "'DM Sans', system-ui, sans-serif" }}
-                >
-                  {branding.orgName}
-                </span>
-                <span
-                  className="text-sm font-bold leading-tight"
-                  style={{ color: 'white', fontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif" }}
-                >
-                  {branding.appName}
-                </span>
-              </div>
-            </div>
+              <span
+                className="text-sm font-bold text-white leading-none truncate hidden sm:block"
+                style={{ fontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif" }}
+                title={`${branding.orgName} — ${branding.appName}`}
+              >
+                {branding.appName}
+              </span>
+            </>
           )}
         </div>
 

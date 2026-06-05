@@ -47,7 +47,6 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
 
   for (let logicalIdx = 0; logicalIdx < pageOrder.length; logicalIdx++) {
     const originalIdx = pageOrder[logicalIdx] ?? logicalIdx
-    const meta = pageMeta[logicalIdx]
     const rasterised = rasterisedPages.get(logicalIdx)
 
     if (rasterised) {
@@ -69,15 +68,12 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
       const annotations = annotationsByPage.get(logicalIdx) ?? []
       const nonRedact = annotations.filter((a) => a.type !== 'redact')
 
-      if (nonRedact.length > 0 && meta) {
-        const rotation = pageRotations.get(logicalIdx) ?? 0
+      if (nonRedact.length > 0) {
         const viewport = copiedPage.getSize()
-        const scale = rotation === 90 || rotation === 270
-          ? viewport.width / meta.height
-          : viewport.width / meta.width
-
+        // Annotations are stored in PDF user-space units (scale=1 coordinate system),
+        // so no scaling conversion is needed.
         await serialiseAnnotations(outDoc, outPage, nonRedact, {
-          scale,
+          scale: 1,
           pageWidthPt: viewport.width,
           pageHeightPt: viewport.height,
         })

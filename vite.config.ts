@@ -3,7 +3,11 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
+// Set VITE_BASE_URL=/JoePDF/ when building for GitHub Pages
+const base = process.env['VITE_BASE_URL'] ?? '/'
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     viteStaticCopy({
@@ -31,6 +35,7 @@ export default defineConfig({
         manualChunks: (id: string) => {
           if (id.includes('pdfjs-dist')) return 'pdfjs'
           if (id.includes('pdf-lib')) return 'pdf-lib'
+          if (id.includes('docx')) return 'docx'
           if (id.includes('konva')) return 'konva'
           if (id.includes('react') || id.includes('zustand') || id.includes('immer')) return 'vendor'
           return undefined
