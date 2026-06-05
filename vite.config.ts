@@ -1,26 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import { viteStaticCopy } from 'vite-plugin-static-copy'
 
-// Set VITE_BASE_URL=/JoePDF/ when building for GitHub Pages
+// pdf.worker.min.js is copied into public/ by the prebuild/predev npm script
+// (see package.json "copy-worker"). Vite serves public/ files at the root URL,
+// so the worker is available at /pdf.worker.min.js at runtime.
 const base = process.env['VITE_BASE_URL'] ?? '/'
 
 export default defineConfig({
   base,
   plugins: [
     react(),
-    viteStaticCopy({
-      targets: [
-        {
-          // Rename .mjs → .js so GitHub Pages serves it with application/javascript
-          // MIME type. Chrome rejects workers with incorrect MIME types.
-          src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
-          dest: '',
-          rename: 'pdf.worker.min.js',
-        },
-      ],
-    }),
   ],
   resolve: {
     alias: {

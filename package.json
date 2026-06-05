@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "copy-worker": "node -e \"require('fs').cpSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs','public/pdf.worker.min.js')\"",
+    "predev": "npm run copy-worker",
+    "prebuild": "npm run copy-worker",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:ghpages": "tsc -b && VITE_BASE_URL=/ vite build",
