@@ -50,7 +50,7 @@ export function PageControls() {
   return (
     <div
       ref={containerRef}
-      className="h-9 flex items-center gap-1 px-2 bg-white border-b border-slate-100 text-sm flex-shrink-0"
+      className="h-9 flex items-center gap-1 px-2 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 text-sm flex-shrink-0"
     >
       <Tooltip content="Zoom out" shortcut="-" side="bottom">
         <Button variant="ghost" size="icon" onClick={zoomOut} disabled={zoom <= MIN_ZOOM} aria-label="Zoom out">
@@ -59,7 +59,7 @@ export function PageControls() {
       </Tooltip>
 
       <button
-        className="min-w-[3.5rem] text-center text-xs font-medium text-slate-600 hover:bg-slate-100 rounded px-1.5 py-1 tabular-nums"
+        className="min-w-[3.5rem] text-center text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded px-1.5 py-1 tabular-nums"
         onClick={resetZoom}
         aria-label={`Zoom level: ${zoomPercent}%. Click to reset.`}
         title="Click to reset to 100%"
@@ -73,7 +73,7 @@ export function PageControls() {
         </Button>
       </Tooltip>
 
-      <div className="w-px h-5 bg-slate-200 mx-1" />
+      <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
 
       <Tooltip content="Fit to width" side="bottom">
         <Button variant="ghost" size="icon" onClick={fitToWidth} aria-label="Fit to width">
@@ -87,7 +87,7 @@ export function PageControls() {
         </Button>
       </Tooltip>
 
-      <div className="w-px h-5 bg-slate-200 mx-1" />
+      <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
 
       <Tooltip content="Rotate left" side="bottom">
         <Button variant="ghost" size="icon" onClick={rotateCCW} aria-label="Rotate page counter-clockwise">
@@ -107,7 +107,7 @@ export function PageControls() {
             Text select mode — click toolbar to draw
           </span>
         )}
-        <span className="text-xs text-slate-400 tabular-nums">
+        <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
           {pageCount > 0 && `Page ${currentPage + 1} of ${pageCount}`}
         </span>
       </div>

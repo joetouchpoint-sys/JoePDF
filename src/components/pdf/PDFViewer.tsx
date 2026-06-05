@@ -106,7 +106,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
 
       {/* Stamp mode banner */}
       {activeTool === Tool.STAMP && pendingStamp && (
-        <div className="flex items-center justify-between gap-3 px-3 h-8 bg-violet-50 border-b border-violet-200 text-xs text-violet-700 flex-shrink-0">
+        <div className="flex items-center justify-between gap-3 px-3 h-8 bg-violet-50 dark:bg-violet-950/30 border-b border-violet-200 dark:border-violet-800 text-xs text-violet-700 dark:text-violet-400 flex-shrink-0">
           <span className="font-medium">Stamp mode — click anywhere on the PDF to place your signature</span>
           <button
             onClick={() => {
@@ -123,7 +123,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
       <div
         ref={containerRef}
         id="pdf-viewer-container"
-        className="flex-1 overflow-auto scrollbar-thin bg-slate-200 p-6 flex flex-col items-center gap-6"
+        className="flex-1 overflow-auto scrollbar-thin bg-slate-200 dark:bg-slate-950 p-6 flex flex-col items-center gap-6"
         style={{ cursor: activeTool === Tool.STAMP ? 'copy' : undefined }}
       >
         {Array.from({ length: pageCount }, (_, i) => {

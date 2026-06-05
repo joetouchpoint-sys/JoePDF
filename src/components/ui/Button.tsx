@@ -14,9 +14,9 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary:
     'bg-[--color-primary] text-white hover:brightness-110 active:brightness-90 focus-visible:ring-2 focus-visible:ring-[--color-primary] focus-visible:ring-offset-2',
   secondary:
-    'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
+    'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 active:bg-slate-100 dark:active:bg-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
   ghost:
-    'text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
+    'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
   danger:
     'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2',
   toolbar:

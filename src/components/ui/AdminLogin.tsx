@@ -46,7 +46,7 @@ export function AdminLogin({ onSuccess, onCancel }: AdminLoginProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
         <div className="px-6 pt-6 pb-4 flex flex-col items-center gap-3">
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center"
@@ -74,20 +74,20 @@ export function AdminLogin({ onSuccess, onCancel }: AdminLoginProps) {
               onChange={(e) => { setUsername(e.target.value); setError('') }}
               autoFocus
               autoComplete="username"
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+              className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
               style={{ '--tw-ring-color': '#178351' } as React.CSSProperties}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Password</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError('') }}
                 autoComplete="current-password"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                 style={{ '--tw-ring-color': '#178351' } as React.CSSProperties}
               />
               <button
@@ -111,7 +111,7 @@ export function AdminLogin({ onSuccess, onCancel }: AdminLoginProps) {
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 border border-slate-200 rounded-lg py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              className="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               Cancel
             </button>

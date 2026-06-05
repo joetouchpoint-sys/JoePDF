@@ -14,6 +14,7 @@ interface SerialiseOptions {
   scale: number
   pageWidthPt: number
   pageHeightPt: number
+  customFont?: { name: string; bytes: Uint8Array } | null
 }
 
 function canvasYToPdfY(
@@ -31,12 +32,25 @@ export async function serialiseAnnotations(
   annotations: Annotation[],
   opts: SerialiseOptions,
 ): Promise<void> {
-  const { scale, pageHeightPt } = opts
+  const { scale, pageHeightPt, customFont } = opts
 
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique)
   const helveticaBoldOblique = await pdfDoc.embedFont(StandardFonts.HelveticaBoldOblique)
+
+  // Embed custom font once if provided (lazy, only when actually needed)
+  let embeddedCustomFont: Awaited<ReturnType<typeof pdfDoc.embedFont>> | null = null
+  async function getCustomFont() {
+    if (!embeddedCustomFont && customFont) {
+      try {
+        embeddedCustomFont = await pdfDoc.embedFont(customFont.bytes)
+      } catch {
+        // Fall back to Helvetica if embedding fails
+      }
+    }
+    return embeddedCustomFont
+  }
 
   for (const ann of annotations) {
     if (!ann.visible || ann.type === 'redact') continue
@@ -48,8 +62,10 @@ export async function serialiseAnnotations(
 
     switch (ann.type) {
       case 'text': {
-        const font =
-          ann.fontBold && ann.fontItalic
+        const usesCustomFont = customFont && ann.fontFamily === customFont.name
+        const font = usesCustomFont
+          ? ((await getCustomFont()) ?? helvetica)
+          : ann.fontBold && ann.fontItalic
             ? helveticaBoldOblique
             : ann.fontBold
               ? helveticaBold

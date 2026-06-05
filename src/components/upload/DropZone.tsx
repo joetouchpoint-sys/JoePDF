@@ -72,13 +72,13 @@ export function DropZone() {
         'cursor-pointer transition-all duration-200 outline-none',
         'focus-visible:ring-2 focus-visible:ring-[--color-primary] focus-visible:ring-offset-2',
         isDragOver
-          ? 'border-[--color-primary] bg-blue-50 scale-[1.01]'
-          : 'border-slate-200 bg-white hover:border-[--color-primary] hover:bg-slate-50',
+          ? 'border-[--color-primary] bg-blue-50 dark:bg-blue-950/30 scale-[1.01]'
+          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-[--color-primary] hover:bg-slate-50 dark:hover:bg-slate-750',
       )}
     >
       <div className={clsx(
         'w-16 h-16 rounded-2xl flex items-center justify-center transition-colors',
-        isDragOver ? 'bg-blue-100' : 'bg-slate-100',
+        isDragOver ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-slate-100 dark:bg-slate-700',
       )}>
         {isDragOver ? (
           <FileText className="w-8 h-8 text-[--color-primary]" />
@@ -88,10 +88,10 @@ export function DropZone() {
       </div>
 
       <div className="text-center">
-        <p className="text-base font-semibold text-slate-700">
+        <p className="text-base font-semibold text-slate-700 dark:text-slate-200">
           {isDragOver ? 'Release to open' : 'Drop a PDF here'}
         </p>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
           or <span className="text-[--color-primary] font-medium">browse to upload</span>
         </p>
       </div>
@@ -106,7 +106,7 @@ export function DropZone() {
         </div>
       )}
 
-      <p className="text-xs text-slate-400">PDF files up to 200 MB</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500">PDF files up to 200 MB</p>
 
       <input
         ref={inputRef}

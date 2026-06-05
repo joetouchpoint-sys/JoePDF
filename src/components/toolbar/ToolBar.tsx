@@ -117,7 +117,7 @@ export function ToolBar() {
     <aside
       aria-label="Drawing tools"
       className={clsx(
-        'flex-shrink-0 bg-white border-r border-slate-100 flex flex-col py-3 gap-0.5 select-none overflow-y-auto scrollbar-thin transition-all duration-200',
+        'flex-shrink-0 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-700 flex flex-col py-3 gap-0.5 select-none overflow-y-auto scrollbar-thin transition-all duration-200',
         expanded ? 'w-40' : 'w-12',
       )}
     >
@@ -128,7 +128,7 @@ export function ToolBar() {
             type="button"
             onClick={() => setExpanded(!expanded)}
             aria-label={expanded ? 'Collapse toolbar' : 'Expand toolbar'}
-            className="w-7 h-7 rounded flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="w-7 h-7 rounded flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             {expanded ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </button>
@@ -140,11 +140,11 @@ export function ToolBar() {
           key={group.label}
           className={clsx(
             'flex flex-col gap-0.5 w-full px-1.5',
-            gi > 0 && 'border-t border-slate-100 pt-2 mt-1',
+            gi > 0 && 'border-t border-slate-100 dark:border-slate-700 pt-2 mt-1',
           )}
         >
           {expanded && (
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1 mb-0.5">
+            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 mb-0.5">
               {group.label}
             </p>
           )}
@@ -162,9 +162,9 @@ export function ToolBar() {
       ))}
 
       {/* Page tools */}
-      <div className="border-t border-slate-100 pt-2 mt-1 px-1.5 flex flex-col gap-0.5">
+      <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-1 px-1.5 flex flex-col gap-0.5">
         {expanded && (
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1 mb-0.5">
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 mb-0.5">
             Page tools
           </p>
         )}
@@ -180,8 +180,8 @@ export function ToolBar() {
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
                 expanded ? 'w-full px-2 py-1.5 text-xs font-medium text-left' : 'w-9 h-9 justify-center',
                 pt.disabled
-                  ? 'text-slate-300 cursor-not-allowed'
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800',
+                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200',
               )}
             >
               <span className="flex-shrink-0">{pt.icon}</span>
@@ -193,9 +193,9 @@ export function ToolBar() {
       </div>
 
       {/* Text select mode */}
-      <div className="border-t border-slate-100 pt-2 mt-1 px-1.5">
+      <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-1 px-1.5">
         {expanded && (
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1 mb-0.5">
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 mb-0.5">
             PDF text
           </p>
         )}
@@ -210,8 +210,8 @@ export function ToolBar() {
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
               expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
               textSelectMode
-                ? 'bg-amber-100 text-amber-700'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800',
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200',
             )}
           >
             <MousePointerClick className="w-4 h-4 flex-shrink-0" />

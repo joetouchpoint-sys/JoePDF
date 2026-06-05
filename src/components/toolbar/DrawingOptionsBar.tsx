@@ -31,7 +31,7 @@ export function DrawingOptionsBar() {
   if (!isDrawing) return null
 
   return (
-    <div className="flex items-center gap-3 px-3 h-10 border-b border-slate-200 bg-white text-sm flex-shrink-0 overflow-x-auto">
+    <div className="flex items-center gap-3 px-3 h-10 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm flex-shrink-0 overflow-x-auto">
 
       {/* Stroke colour + none toggle — shapes, lines, freehand */}
       {(isShapeTool || isLineTool || isFreehand) && (

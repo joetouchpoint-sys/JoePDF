@@ -46,9 +46,9 @@ export function PDFThumbnail({
       aria-pressed={isSelected}
       className={clsx(
         'flex flex-col items-center gap-1.5 p-1.5 rounded-lg transition-all w-full',
-        'hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-        isActive && !isSelected && 'bg-blue-50',
-        isSelected && 'bg-green-50',
+        'hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+        isActive && !isSelected && 'bg-blue-50 dark:bg-blue-900/20',
+        isSelected && 'bg-green-50 dark:bg-green-900/20',
       )}
     >
       <div className={clsx(
@@ -57,7 +57,7 @@ export function PDFThumbnail({
           ? 'border-[--color-primary] shadow-green-100'
           : isActive
             ? 'border-blue-400 shadow-blue-100'
-            : 'border-slate-200',
+            : 'border-slate-200 dark:border-slate-600',
       )}>
         <canvas ref={canvasRef} style={{ display: 'block', width: THUMB_WIDTH }} />
         {/* Selection tick */}
@@ -72,7 +72,7 @@ export function PDFThumbnail({
       </div>
       <span className={clsx(
         'text-xs tabular-nums',
-        isSelected ? 'text-[--color-primary] font-semibold' : isActive ? 'text-blue-600 font-semibold' : 'text-slate-500',
+        isSelected ? 'text-[--color-primary] font-semibold' : isActive ? 'text-blue-600 dark:text-blue-400 font-semibold' : 'text-slate-500 dark:text-slate-400',
       )}>
         {pageIndex + 1}
       </span>

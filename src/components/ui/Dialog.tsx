@@ -36,7 +36,8 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
     <dialog
       ref={dialogRef}
       className={clsx(
-        'rounded-xl shadow-2xl border border-slate-200 p-0 backdrop:bg-slate-900/50 w-full max-w-md',
+        'rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-0 backdrop:bg-slate-900/50 w-full max-w-md',
+        'bg-white dark:bg-slate-800',
         'open:flex open:flex-col',
         className,
       )}
@@ -44,8 +45,8 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-semibold text-slate-800">{title}</h2>
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 px-5 py-4">
+        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">{title}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close dialog">
           <X className="w-4 h-4" />
         </Button>
@@ -78,7 +79,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} title={title}>
-      <p className="text-sm text-slate-600 mb-6">{message}</p>
+      <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">{message}</p>
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={onClose} disabled={isLoading}>
           Cancel

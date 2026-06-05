@@ -20,6 +20,8 @@ export interface PendingStamp {
   natH: number
 }
 
+export type StampSize = 'small' | 'medium' | 'large'
+
 export interface UISlice {
   ui: {
     activeTool: Tool
@@ -42,6 +44,8 @@ export interface UISlice {
     compressDialogOpen: boolean
     signatureDialogOpen: boolean
     pendingStamp: PendingStamp | null
+    lastSignature: PendingStamp | null
+    darkMode: boolean
   }
   setActiveTool: (tool: Tool) => void
   setZoom: (zoom: number) => void
@@ -63,6 +67,8 @@ export interface UISlice {
   setCompressDialogOpen: (open: boolean) => void
   setSignatureDialogOpen: (open: boolean) => void
   setPendingStamp: (stamp: PendingStamp | null) => void
+  setLastSignature: (stamp: PendingStamp | null) => void
+  setDarkMode: (dark: boolean) => void
   resetUI: () => void
 }
 
@@ -100,13 +106,23 @@ const initialUI = {
   compressDialogOpen: false,
   signatureDialogOpen: false,
   pendingStamp: null as PendingStamp | null,
+  lastSignature: null as PendingStamp | null,
+  darkMode: false,
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
   ui: initialUI,
 
   setActiveTool: (tool) =>
-    set((s) => ({ ui: { ...s.ui, activeTool: tool, textSelectMode: false } })),
+    set((s) => ({
+      ui: {
+        ...s.ui,
+        activeTool: tool,
+        textSelectMode: false,
+        // Exit stamp mode automatically when switching to any other tool
+        pendingStamp: tool !== Tool.STAMP ? null : s.ui.pendingStamp,
+      },
+    })),
   setZoom: (zoom) =>
     set((s) => ({ ui: { ...s.ui, zoom: Math.min(4, Math.max(0.25, zoom)) } })),
   setCurrentPage: (page) => set((s) => ({ ui: { ...s.ui, currentPage: page } })),
@@ -136,5 +152,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setCompressDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, compressDialogOpen: open } })),
   setSignatureDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, signatureDialogOpen: open } })),
   setPendingStamp: (stamp) => set((s) => ({ ui: { ...s.ui, pendingStamp: stamp } })),
+  setLastSignature: (stamp) => set((s) => ({ ui: { ...s.ui, lastSignature: stamp } })),
+  setDarkMode: (dark) => set((s) => ({ ui: { ...s.ui, darkMode: dark } })),
   resetUI: () => set({ ui: initialUI }),
 })

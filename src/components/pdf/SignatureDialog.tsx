@@ -38,6 +38,8 @@ export function SignatureDialog() {
   const setOpen = useStore((s) => s.setSignatureDialogOpen)
   const setActiveTool = useStore((s) => s.setActiveTool)
   const setPendingStamp = useStore((s) => s.setPendingStamp)
+  const lastSignature = useStore((s) => s.ui.lastSignature)
+  const setLastSignature = useStore((s) => s.setLastSignature)
 
   const [tab, setTab] = useState<SignTab>('draw')
   const [typedText, setTypedText] = useState('')
@@ -192,6 +194,7 @@ export function SignatureDialog() {
 
     const stamp: PendingStamp = { src, displayW, displayH, natW, natH }
     setPendingStamp(stamp)
+    setLastSignature(stamp)
     setActiveTool(Tool.STAMP)
     setOpen(false)
     setTypedText('')
@@ -214,21 +217,47 @@ export function SignatureDialog() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-100 dark:border-slate-700">
           <div>
-            <h3 className="font-semibold text-slate-800">Sign PDF</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Click to place your signature — stamp it as many times as you like</p>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">Sign PDF</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Click to place your signature — stamp it as many times as you like</p>
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:bg-slate-100"
+            className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex border-b border-slate-100">
+        {lastSignature && (
+          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 mb-1">Last used signature</p>
+              <img
+                src={lastSignature.src}
+                alt="Last signature"
+                className="max-h-10 max-w-full object-contain border border-slate-100 rounded bg-slate-50"
+                style={{ maxWidth: `${lastSignature.displayW}px` }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingStamp(lastSignature)
+                setActiveTool(Tool.STAMP)
+                setOpen(false)
+              }}
+              className="flex-shrink-0 text-xs font-semibold text-white rounded-md px-3 py-1.5 transition-colors"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+            >
+              Stamp again
+            </button>
+          </div>
+        )}
+
+        <div className="flex border-b border-slate-100 dark:border-slate-700">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -237,7 +266,7 @@ export function SignatureDialog() {
                 'flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors border-b-2',
                 tab === t.id
                   ? 'border-[--color-primary] text-[--color-primary]'
-                  : 'border-transparent text-slate-400 hover:text-slate-600',
+                  : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300',
               )}
             >
               {t.icon}
@@ -288,7 +317,7 @@ export function SignatureDialog() {
                 value={typedText}
                 onChange={(e) => setTypedText(e.target.value)}
                 placeholder="Type your name"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+                className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
                 autoFocus
               />
               <div className="grid grid-cols-2 gap-2">
@@ -371,7 +400,7 @@ export function SignatureDialog() {
         <div className="flex gap-2 px-5 pb-5">
           <button
             onClick={() => setOpen(false)}
-            className="flex-1 border border-slate-200 rounded-lg py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+            className="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
             Cancel
           </button>

@@ -10,6 +10,8 @@ export interface BrandingConfig {
   privacyNotice: string
   customFontBase64: string | null
   customFontName: string
+  uploadDescription: string
+  reportIssueUrl: string
 }
 
 export const DEFAULT_BRANDING: BrandingConfig = {
@@ -24,4 +26,6 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   privacyNotice: '',
   customFontBase64: null,
   customFontName: 'VAG Rounded',
+  uploadDescription: 'Edit, redact, and manage PDF documents — entirely in your browser.',
+  reportIssueUrl: '',
 }

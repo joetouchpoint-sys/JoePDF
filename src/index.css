@@ -34,6 +34,11 @@
     color: #292C4F;
   }
 
+  .dark body {
+    background-color: #0f172a;
+    color: #e2e8f0;
+  }
+
   h1, h2, h3 {
     font-family: 'Nunito', 'VAG Rounded', system-ui, sans-serif;
     font-weight: 700;

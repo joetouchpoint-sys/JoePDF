@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Undo2, Redo2, Download, Settings2, X, FileText } from 'lucide-react'
+import { Undo2, Redo2, Download, Settings2, X, FileText, Moon, Sun } from 'lucide-react'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ConfirmDialog } from '@/components/ui/Dialog'
 import { useStore, resetAllState } from '@/store'
@@ -9,6 +9,7 @@ import { downloadFile } from '@/utils/fileUtils'
 import { showToast } from '@/components/ui/Toast'
 import { rasteriseRedactedPages } from '@/lib/redactionEngine'
 import { getCachedDocument } from '@/hooks/usePDFDocument'
+import { clearAutosaveDraft } from '@/hooks/useAutosave'
 import type { RedactAnnotation, Annotation } from '@/types/annotation'
 import { clsx } from 'clsx'
 
@@ -17,6 +18,8 @@ export function Header() {
   const fileName = useStore((s) => s.pdf.fileName)
   const isDirty = useStore((s) => s.ui.isDirty)
   const isExporting = useStore((s) => s.ui.isExporting)
+  const darkMode = useStore((s) => s.ui.darkMode)
+  const setDarkMode = useStore((s) => s.setDarkMode)
   const setShowBrandingPanel = useStore((s) => s.setShowBrandingPanel)
   const setIsExporting = useStore((s) => s.setIsExporting)
   const setIsDirty = useStore((s) => s.setIsDirty)
@@ -25,6 +28,18 @@ export function Header() {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [showRedactConfirm, setShowRedactConfirm] = useState(false)
   const [pendingRedactCount, setPendingRedactCount] = useState(0)
+
+  const handleToggleDark = useCallback(() => {
+    const next = !darkMode
+    setDarkMode(next)
+    if (next) {
+      document.documentElement.classList.add('dark')
+      try { localStorage.setItem('joepdf_dark', '1') } catch { /* ok */ }
+    } else {
+      document.documentElement.classList.remove('dark')
+      try { localStorage.removeItem('joepdf_dark') } catch { /* ok */ }
+    }
+  }, [darkMode, setDarkMode])
 
   const annotationCount = useStore((s) => {
     let count = 0
@@ -71,6 +86,14 @@ export function Header() {
       const annotsByPage = new Map<number, Annotation[]>()
       for (const [k, v] of freshStore.annotations) annotsByPage.set(k, v as Annotation[])
 
+      const brandingState = freshStore.branding
+      const customFont = brandingState.customFontBase64 && brandingState.customFontName
+        ? {
+          name: brandingState.customFontName,
+          bytes: Uint8Array.from(atob(brandingState.customFontBase64), (c) => c.charCodeAt(0)),
+        }
+        : null
+
       const bytes = await exportPDF({
         originalBytes: freshStore.pdf.pdfBytes!,
         pageOrder: freshStore.pdf.pageOrder,
@@ -80,11 +103,13 @@ export function Header() {
         pageRotations: freshStore.ui.pageRotations,
         fileName: freshStore.pdf.fileName ?? 'document.pdf',
         options: { removeMetadata: false },
+        customFont,
       })
 
       const outName = (freshStore.pdf.fileName ?? 'document').replace(/\.pdf$/i, '') + '-edited.pdf'
       downloadFile(bytes, outName)
       setIsDirty(false)
+      clearAutosaveDraft()
       showToast('PDF downloaded.', 'success')
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Export failed.', 'error')
@@ -109,6 +134,13 @@ export function Header() {
     window.addEventListener('joepdf:export', handler)
     return () => window.removeEventListener('joepdf:export', handler)
   }, [handleExport])
+
+  // Sync darkMode store with the DOM class set by init.js before React mounted
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark')
+    if (isDark !== darkMode) setDarkMode(isDark)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const hasPDF = !!fileName
 
@@ -214,6 +246,16 @@ export function Header() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
+          <Tooltip content={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} side="bottom">
+            <button
+              type="button"
+              onClick={handleToggleDark}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-8 h-8 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </Tooltip>
           <Tooltip content="Settings & branding" side="bottom">
             <button
               type="button"

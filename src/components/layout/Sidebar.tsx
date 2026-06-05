@@ -24,7 +24,7 @@ export function Sidebar({ doc }: SidebarProps) {
       <aside
         aria-label="Page navigation"
         className={`
-          bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-200
+          bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden transition-all duration-200
           ${sidebarOpen ? 'w-[136px]' : 'w-0'}
         `}
       >
@@ -41,7 +41,7 @@ export function Sidebar({ doc }: SidebarProps) {
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         aria-expanded={sidebarOpen}
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full w-4 h-8 bg-white border border-l-0 border-slate-200 rounded-r flex items-center justify-center text-slate-400 hover:text-slate-600 z-10"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full w-4 h-8 bg-white dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 z-10"
       >
         {sidebarOpen ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
       </button>

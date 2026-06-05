@@ -29,6 +29,7 @@ export interface ExportInput {
   pageRotations: Map<number, number>
   fileName: string
   options: ExportOptions
+  customFont?: { name: string; bytes: Uint8Array } | null
 }
 
 export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
@@ -40,6 +41,7 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
     rasterisedPages,
     pageRotations,
     options,
+    customFont,
   } = input
 
   const srcDoc = await PDFDocument.load(originalBytes, { ignoreEncryption: false })
@@ -76,6 +78,7 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
           scale: 1,
           pageWidthPt: viewport.width,
           pageHeightPt: viewport.height,
+          customFont,
         })
       }
 

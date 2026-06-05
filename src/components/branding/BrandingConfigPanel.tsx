@@ -237,7 +237,7 @@ export function BrandingConfigPanel() {
               type="text"
               value={branding.orgName}
               onChange={(e) => setBranding({ orgName: e.target.value })}
-              className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+              className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
           <div>
@@ -249,7 +249,7 @@ export function BrandingConfigPanel() {
               type="text"
               value={branding.appName}
               onChange={(e) => setBranding({ appName: e.target.value })}
-              className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+              className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
         </div>
@@ -290,6 +290,37 @@ export function BrandingConfigPanel() {
           ))}
         </div>
 
+        {/* Upload page description */}
+        <div>
+          <label className="text-xs font-medium text-slate-600 block mb-1">
+            Upload page tagline
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(shown below app name on home screen)</span>
+          </label>
+          <textarea
+            value={branding.uploadDescription}
+            onChange={(e) => setBranding({ uploadDescription: e.target.value })}
+            rows={2}
+            placeholder="Edit, redact, and manage PDF documents — entirely in your browser."
+            className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none"
+          />
+        </div>
+
+        {/* Report issue URL */}
+        <div>
+          <label className="text-xs font-medium text-slate-600 block mb-1">
+            Report issue / feedback URL
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(leave blank to hide)</span>
+          </label>
+          <input
+            type="url"
+            value={branding.reportIssueUrl}
+            onChange={(e) => setBranding({ reportIssueUrl: e.target.value })}
+            placeholder="https://forms.office.com/… or GitHub Issues URL"
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+          />
+          <p className="text-xs text-slate-400 mt-1">Opens in a new tab. Shown in the app footer and on the upload screen.</p>
+        </div>
+
         {/* Footer / support */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -302,7 +333,7 @@ export function BrandingConfigPanel() {
               value={branding.footerText}
               onChange={(e) => setBranding({ footerText: e.target.value })}
               placeholder="Optional"
-              className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+              className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
           <div>
@@ -312,7 +343,7 @@ export function BrandingConfigPanel() {
               value={branding.supportEmail}
               onChange={(e) => setBranding({ supportEmail: e.target.value })}
               placeholder="support@example.com"
-              className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+              className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
         </div>

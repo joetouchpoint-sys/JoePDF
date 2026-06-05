@@ -4,7 +4,10 @@ import { useBranding } from '@/hooks/useBranding'
 function setFavicon(src: string | null) {
   // Remove any existing dynamic favicon
   document.querySelectorAll('link[data-joepdf-favicon]').forEach((el) => el.remove())
-  if (!src) return
+  if (!src) {
+    try { localStorage.removeItem('joepdf_favicon') } catch { /* ok */ }
+    return
+  }
 
   // Create a 32x32 canvas favicon from the logo image
   const img = new Image()
@@ -19,12 +22,15 @@ function setFavicon(src: string | null) {
     const w = img.width * scale
     const h = img.height * scale
     ctx.drawImage(img, (32 - w) / 2, (32 - h) / 2, w, h)
+    const dataUrl = canvas.toDataURL('image/png')
     const link = document.createElement('link')
     link.rel = 'icon'
     link.type = 'image/png'
     link.setAttribute('data-joepdf-favicon', '1')
-    link.href = canvas.toDataURL('image/png')
+    link.href = dataUrl
     document.head.appendChild(link)
+    // Persist for bookmarks — read synchronously by init.js before React mounts
+    try { localStorage.setItem('joepdf_favicon', dataUrl) } catch { /* ok */ }
   }
   img.src = src
 }

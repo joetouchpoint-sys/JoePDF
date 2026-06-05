@@ -13,18 +13,23 @@ import { MergePDFDialog } from '@/components/pdf/MergePDFDialog'
 import { ToastContainer } from '@/components/ui/Toast'
 import { usePDFDocument } from '@/hooks/usePDFDocument'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { useAutosave } from '@/hooks/useAutosave'
 import { useStore } from '@/store'
 
 function AppFooter() {
   const branding = useStore((s) => s.branding)
-  if (!branding.footerText && !branding.supportEmail) return null
+  const hasAny = branding.footerText || branding.supportEmail || branding.reportIssueUrl
+  if (!hasAny) return null
+
+  const hasSeparator = (branding.footerText || branding.supportEmail) && branding.reportIssueUrl
+
   return (
-    <footer className="h-7 flex-shrink-0 flex items-center justify-center gap-4 px-4 bg-white border-t border-slate-100">
+    <footer className="h-7 flex-shrink-0 flex items-center justify-center gap-4 px-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
       {branding.footerText && (
-        <span className="text-xs text-slate-400">{branding.footerText}</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">{branding.footerText}</span>
       )}
       {branding.footerText && branding.supportEmail && (
-        <span className="text-slate-200 text-xs">·</span>
+        <span className="text-slate-200 dark:text-slate-600 text-xs">·</span>
       )}
       {branding.supportEmail && (
         <a
@@ -33,6 +38,18 @@ function AppFooter() {
           style={{ color: 'var(--color-primary)' }}
         >
           {branding.supportEmail}
+        </a>
+      )}
+      {hasSeparator && <span className="text-slate-200 dark:text-slate-600 text-xs">·</span>}
+      {branding.reportIssueUrl && (
+        <a
+          href={branding.reportIssueUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs hover:underline"
+          style={{ color: 'var(--color-primary)' }}
+        >
+          Report an issue
         </a>
       )}
     </footer>
@@ -57,15 +74,15 @@ function EditorContent() {
         {hasPDF && isLoading && (
           <div className="flex-1 flex items-center justify-center gap-3">
             <div className="w-5 h-5 border-2 border-[--color-primary] border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-slate-500">Loading document…</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">Loading document…</span>
           </div>
         )}
 
         {hasPDF && error && (
           <div className="flex-1 flex items-center justify-center p-8">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md text-center">
-              <p className="text-red-700 font-medium mb-1">Failed to load PDF</p>
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl p-6 max-w-md text-center">
+              <p className="text-red-700 dark:text-red-400 font-medium mb-1">Failed to load PDF</p>
+              <p className="text-red-600 dark:text-red-500 text-sm">{error}</p>
             </div>
           </div>
         )}
@@ -78,6 +95,7 @@ function EditorContent() {
 
 export function AppShell() {
   useKeyboardShortcuts()
+  useAutosave()
 
   // Warn on refresh/tab-close whenever a document is open
   const hasPDF = useStore((s) => !!s.pdf.pdfBytes)
@@ -94,7 +112,7 @@ export function AppShell() {
 
   return (
     <BrandingProvider>
-      <div className="flex flex-col h-full overflow-hidden bg-slate-50">
+      <div className="flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
         <Header />
         <EditorContent />
         <AppFooter />
