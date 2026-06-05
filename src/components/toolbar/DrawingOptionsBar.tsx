@@ -1,5 +1,6 @@
 import { useStore } from '@/store'
 import { Tool } from '@/types/tool'
+import { HexColorInput } from '@/components/ui/HexColorInput'
 import { clsx } from 'clsx'
 
 const STROKE_WIDTHS = [1, 2, 3, 5, 8]
@@ -36,13 +37,11 @@ export function DrawingOptionsBar() {
       {(isShapeTool || isLineTool || isFreehand) && (
         <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
           <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Stroke</legend>
-          <input
-            type="color"
+          <HexColorInput
             value={defaults.strokeNone ? '#cccccc' : defaults.strokeColor}
-            onChange={(e) => setDefaults({ strokeColor: e.target.value, strokeNone: false })}
+            onChange={(hex) => setDefaults({ strokeColor: hex, strokeNone: false })}
             disabled={defaults.strokeNone}
-            className="w-6 h-6 rounded border border-slate-300 cursor-pointer disabled:opacity-40"
-            title="Stroke colour"
+            label="Stroke colour"
           />
           <button
             type="button"
@@ -64,13 +63,11 @@ export function DrawingOptionsBar() {
       {isShapeTool && (
         <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
           <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Fill</legend>
-          <input
-            type="color"
+          <HexColorInput
             value={defaults.fillColor ?? '#ffffff'}
-            onChange={(e) => setDefaults({ fillColor: e.target.value })}
+            onChange={(hex) => setDefaults({ fillColor: hex })}
             disabled={defaults.fillColor === null}
-            className="w-6 h-6 rounded border border-slate-300 cursor-pointer disabled:opacity-40"
-            title="Fill colour"
+            label="Fill colour"
           />
           <button
             type="button"
@@ -143,11 +140,10 @@ export function DrawingOptionsBar() {
           </fieldset>
           <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
             <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Colour</legend>
-            <input
-              type="color"
+            <HexColorInput
               value={defaults.fontColor}
-              onChange={(e) => setDefaults({ fontColor: e.target.value })}
-              className="w-6 h-6 rounded border border-slate-300 cursor-pointer"
+              onChange={(hex) => setDefaults({ fontColor: hex })}
+              label="Font colour"
             />
           </fieldset>
         </>
@@ -157,11 +153,10 @@ export function DrawingOptionsBar() {
       {isHighlight && (
         <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
           <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Colour</legend>
-          <input
-            type="color"
+          <HexColorInput
             value={defaults.highlightColor}
-            onChange={(e) => setDefaults({ highlightColor: e.target.value })}
-            className="w-6 h-6 rounded border border-slate-300 cursor-pointer"
+            onChange={(hex) => setDefaults({ highlightColor: hex })}
+            label="Highlight colour"
           />
         </fieldset>
       )}

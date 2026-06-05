@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
-import { InspectorPanel } from './InspectorPanel'
 import { PDFViewer } from '@/components/pdf/PDFViewer'
 import { UploadScreen } from '@/components/upload/UploadScreen'
 import { BrandingProvider } from '@/components/branding/BrandingProvider'
@@ -15,7 +14,6 @@ import { useStore } from '@/store'
 function EditorContent() {
   const { doc, isLoading, error } = usePDFDocument()
   const hasPDF = useStore((s) => !!s.pdf.pdfBytes)
-  const inspectorOpen = useStore((s) => s.ui.inspectorOpen)
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -42,8 +40,6 @@ function EditorContent() {
 
         {hasPDF && !isLoading && !error && doc && <PDFViewer doc={doc} />}
       </main>
-
-      {hasPDF && doc && inspectorOpen && <InspectorPanel />}
     </div>
   )
 }

@@ -46,8 +46,23 @@ export function useKeyboardShortcuts() {
         return
       }
 
+      // Ctrl+G — open split by groups dialog
+      if (ctrl && e.key === 'g') {
+        e.preventDefault()
+        const hasPDF = !!useStore.getState().pdf.pdfBytes
+        if (hasPDF) useStore.getState().setSplitByGroupsOpen(true)
+        return
+      }
+
       // Tool shortcuts
       if (!ctrl) {
+        // Q — toggle text-select mode
+        if (e.key === 'q' || e.key === 'Q') {
+          const { ui, setTextSelectMode } = useStore.getState()
+          setTextSelectMode(!ui.textSelectMode)
+          return
+        }
+
         const toolMap: Record<string, Tool> = {
           v: Tool.SELECT, V: Tool.SELECT,
           t: Tool.TEXT, T: Tool.TEXT,

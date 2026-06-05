@@ -1,8 +1,11 @@
 import { useCallback, useState, useRef } from 'react'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
-  type DragEndEvent,
+  type DragEndEvent, type Modifier,
 } from '@dnd-kit/core'
+
+// Prevent horizontal drift when dragging thumbnails in the narrow sidebar
+const restrictToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 0 })
 import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable'
@@ -529,7 +532,7 @@ export function ThumbnailPanel({ doc }: ThumbnailPanelProps) {
         </p>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <nav
             aria-label="Page thumbnails"

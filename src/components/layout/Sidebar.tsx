@@ -29,7 +29,7 @@ export function Sidebar({ doc }: SidebarProps) {
         `}
       >
         {sidebarOpen && doc && (
-          <div className="overflow-y-auto scrollbar-thin flex-1">
+          <div className="overflow-y-auto overflow-x-hidden scrollbar-thin flex-1">
             <ThumbnailPanel doc={doc} />
           </div>
         )}

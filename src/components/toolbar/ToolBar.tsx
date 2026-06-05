@@ -120,7 +120,7 @@ export function ToolBar() {
             Page tools
           </p>
         )}
-        <Tooltip content="Split PDF into equal-size page groups" side="right">
+        <Tooltip content="Split PDF into equal-size page groups (Ctrl+G)" side="right">
           <button
             type="button"
             onClick={() => setSplitByGroupsOpen(true)}
@@ -148,7 +148,7 @@ export function ToolBar() {
             PDF text
           </p>
         )}
-        <Tooltip content="Select & copy text from PDF" side="right">
+        <Tooltip content="Select & copy text from PDF (Q)" side="right">
           <button
             type="button"
             onClick={() => setTextSelectMode(!textSelectMode)}

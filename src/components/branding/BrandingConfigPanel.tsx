@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { HexColorInput } from '@/components/ui/HexColorInput'
 import { useStore } from '@/store'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -254,15 +255,11 @@ export function BrandingConfigPanel() {
               <label className="text-xs text-slate-500 block mb-1 capitalize">
                 {key.replace('Color', '')}
               </label>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="color"
-                  value={branding[key]}
-                  onChange={(e) => setBranding({ [key]: e.target.value })}
-                  className="w-8 h-8 rounded cursor-pointer border border-slate-200"
-                />
-                <span className="text-xs text-slate-500 font-mono">{branding[key]}</span>
-              </div>
+              <HexColorInput
+                value={branding[key]}
+                onChange={(hex) => setBranding({ [key]: hex })}
+                label={key.replace('Color', '') + ' colour'}
+              />
             </div>
           ))}
         </div>

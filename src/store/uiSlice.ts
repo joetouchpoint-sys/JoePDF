@@ -65,7 +65,7 @@ const initialUI = {
   currentPage: 0,
   selectedAnnotationId: null,
   sidebarOpen: true,
-  toolbarExpanded: false,
+  toolbarExpanded: true,
   inspectorOpen: true,
   pageRotations: new Map<number, number>(),
   isDirty: false,

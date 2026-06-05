@@ -1,22 +1,27 @@
 import { DropZone } from './DropZone'
-import { Shield, FileText, Zap } from 'lucide-react'
+import { Shield, PenLine, EraserIcon, LayoutGrid } from 'lucide-react'
 import { useStore } from '@/store'
 
 const features = [
   {
     icon: Shield,
     title: 'Private by default',
-    description: 'Documents never leave your browser. All processing happens locally — nothing is uploaded.',
+    description: 'Your documents never leave your device. Everything is processed in your browser — nothing is uploaded.',
   },
   {
-    icon: FileText,
+    icon: PenLine,
     title: 'Annotate and edit',
-    description: 'Add text, shapes, highlights, images and freehand drawings on any page.',
+    description: 'Add text, shapes, highlights, images, and freehand drawings to any page.',
   },
   {
-    icon: Zap,
-    title: 'Secure redaction',
-    description: 'Permanently remove sensitive content via canvas rasterisation — not just a black box.',
+    icon: EraserIcon,
+    title: 'Redact sensitive content',
+    description: 'Permanently remove text or images you want gone. Once saved, redacted content cannot be recovered or revealed.',
+  },
+  {
+    icon: LayoutGrid,
+    title: 'Manage pages',
+    description: 'Reorder, merge, split, and extract pages. Build exactly the document you need.',
   },
 ]
 
@@ -25,28 +30,36 @@ export function UploadScreen() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-6 py-12 gap-10 bg-slate-50">
-      {/* Brand header strip */}
+      {/* Brand header */}
       <div className="text-center">
         <p
-          className="text-xs font-semibold uppercase tracking-widest mb-1"
+          className="text-xs font-semibold uppercase tracking-widest mb-2"
           style={{ color: branding.primaryColor || '#178351', fontFamily: "'DM Sans', system-ui" }}
         >
           {branding.orgName}
         </p>
-        <h1
-          className="text-3xl font-bold mb-2"
-          style={{ color: branding.secondaryColor || '#292C4F', fontFamily: "'Nunito','VAG Rounded',system-ui" }}
-        >
-          {branding.appName}
-        </h1>
+        {branding.logoDataUrl ? (
+          <img
+            src={branding.logoDataUrl}
+            alt={branding.appName}
+            className="h-16 w-auto object-contain mx-auto mb-3"
+          />
+        ) : (
+          <h1
+            className="text-3xl font-bold mb-2"
+            style={{ color: branding.secondaryColor || '#292C4F', fontFamily: "'Nunito','VAG Rounded',system-ui" }}
+          >
+            {branding.appName}
+          </h1>
+        )}
         <p className="text-slate-500 text-base max-w-sm mx-auto">
-          Edit, annotate, and redact PDF documents — entirely in your browser.
+          Edit, redact, and manage PDF documents — entirely in your browser.
         </p>
       </div>
 
       <DropZone />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-3xl w-full">
         {features.map(({ icon: Icon, title, description }) => (
           <div key={title} className="flex flex-col items-center text-center gap-2 p-5 bg-white rounded-xl shadow-sm border border-slate-100">
             <div
