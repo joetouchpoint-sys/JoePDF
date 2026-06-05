@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { PDFDocumentProxy } from '@/lib/pdfRenderer'
+import type { PDFDocumentProxy, RenderHandle } from '@/lib/pdfRenderer'
 import { renderPageToCanvas } from '@/lib/pdfRenderer'
 import { clsx } from 'clsx'
 
@@ -24,7 +24,7 @@ export function PDFThumbnail({
     if (!canvas) return
 
     let scale = THUMB_WIDTH / 595 // default A4 until page loads
-    let handle = { cancel: () => {} }
+    let handle: RenderHandle = { promise: Promise.resolve(), cancel: () => {} }
 
     doc.getPage(pageNumber).then((page) => {
       const vp = page.getViewport({ scale: 1 })
