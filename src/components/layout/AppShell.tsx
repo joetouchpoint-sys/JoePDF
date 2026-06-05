@@ -6,6 +6,7 @@ import { PDFViewer } from '@/components/pdf/PDFViewer'
 import { UploadScreen } from '@/components/upload/UploadScreen'
 import { BrandingProvider } from '@/components/branding/BrandingProvider'
 import { BrandingConfigPanel } from '@/components/branding/BrandingConfigPanel'
+import { SplitByGroupsDialog } from '@/components/pdf/SplitByGroupsDialog'
 import { ToastContainer } from '@/components/ui/Toast'
 import { usePDFDocument } from '@/hooks/usePDFDocument'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -70,6 +71,7 @@ export function AppShell() {
         <EditorContent />
       </div>
       <BrandingConfigPanel />
+      <SplitByGroupsDialog />
       <ToastContainer />
     </BrandingProvider>
   )

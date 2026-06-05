@@ -28,6 +28,7 @@ export interface UISlice {
     textSelectMode: boolean
     drawingDefaults: DrawingDefaults
     newlyCreatedId: string | null
+    splitByGroupsOpen: boolean
   }
   setActiveTool: (tool: Tool) => void
   setZoom: (zoom: number) => void
@@ -43,6 +44,7 @@ export interface UISlice {
   setTextSelectMode: (on: boolean) => void
   setDrawingDefaults: (d: Partial<DrawingDefaults>) => void
   setNewlyCreatedId: (id: string | null) => void
+  setSplitByGroupsOpen: (open: boolean) => void
   resetUI: () => void
 }
 
@@ -72,6 +74,7 @@ const initialUI = {
   textSelectMode: false,
   drawingDefaults: initialDrawingDefaults,
   newlyCreatedId: null,
+  splitByGroupsOpen: false,
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
@@ -102,5 +105,6 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setDrawingDefaults: (d) =>
     set((s) => ({ ui: { ...s.ui, drawingDefaults: { ...s.ui.drawingDefaults, ...d } } })),
   setNewlyCreatedId: (id) => set((s) => ({ ui: { ...s.ui, newlyCreatedId: id } })),
+  setSplitByGroupsOpen: (open) => set((s) => ({ ui: { ...s.ui, splitByGroupsOpen: open } })),
   resetUI: () => set({ ui: initialUI }),
 })

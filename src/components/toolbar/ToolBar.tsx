@@ -1,7 +1,7 @@
 import {
   MousePointer2, Type, Square, Circle, Minus, ArrowRight,
   Pencil, Highlighter, Image as ImageIcon, EraserIcon,
-  ChevronRight, ChevronLeft, MousePointerClick,
+  ChevronRight, ChevronLeft, MousePointerClick, LayoutGrid,
 } from 'lucide-react'
 import { Tool } from '@/types/tool'
 import { ToolButton } from './ToolButton'
@@ -62,6 +62,8 @@ export function ToolBar() {
   const setExpanded = useStore((s) => s.setToolbarExpanded)
   const textSelectMode = useStore((s) => s.ui.textSelectMode)
   const setTextSelectMode = useStore((s) => s.setTextSelectMode)
+  const hasPDF = useStore((s) => !!s.pdf.pdfBytes)
+  const setSplitByGroupsOpen = useStore((s) => s.setSplitByGroupsOpen)
 
   return (
     <aside
@@ -110,6 +112,34 @@ export function ToolBar() {
           ))}
         </div>
       ))}
+
+      {/* Page tools */}
+      <div className="border-t border-slate-100 pt-2 mt-1 px-1.5 flex flex-col gap-0.5">
+        {expanded && (
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1 mb-0.5">
+            Page tools
+          </p>
+        )}
+        <Tooltip content="Split PDF into equal-size page groups" side="right">
+          <button
+            type="button"
+            onClick={() => setSplitByGroupsOpen(true)}
+            disabled={!hasPDF}
+            aria-label="Split into page groups"
+            className={clsx(
+              'flex items-center gap-2 rounded-lg transition-all duration-100',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+              hasPDF
+                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                : 'text-slate-300 cursor-not-allowed',
+            )}
+          >
+            <LayoutGrid className="w-4 h-4 flex-shrink-0" />
+            {expanded && 'Split by groups'}
+          </button>
+        </Tooltip>
+      </div>
 
       {/* Text select mode — allows copying text from PDF */}
       <div className="border-t border-slate-100 pt-2 mt-1 px-1.5">
