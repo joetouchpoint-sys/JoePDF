@@ -6,6 +6,10 @@
   "secondaryColor": "#148be2",
   "accentColor": "#ff0000",
   "footerText": "© JoePDF 2026 | All Rights Reserved.",
-  "supportEmail": "",
-  "privacyNotice": ""
+  "supportEmail": "joe@joepdf.online",
+  "privacyNotice": "",
+  "customFontBase64": null,
+  "customFontName": "",
+  "uploadDescription": "Edit, redact, and manage PDF documents — entirely in your browser.",
+  "reportIssueUrl": "https://forms.cloud.microsoft/r/v7ZdR3676v"
 }
