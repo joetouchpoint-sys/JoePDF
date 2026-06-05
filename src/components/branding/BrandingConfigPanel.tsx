@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button'
 import { showToast } from '@/components/ui/Toast'
 import { AdminLogin, ChangeCredsForm } from '@/components/ui/AdminLogin'
 import { isAdminSession, setAdminSession } from '@/lib/adminAuth'
-import { LogOut, ShieldCheck } from 'lucide-react'
+import { downloadBrandingConfig } from '@/lib/brandingLoader'
+import { LogOut, ShieldCheck, Download, Info } from 'lucide-react'
 
 export function BrandingConfigPanel() {
   const showPanel = useStore((s) => s.ui.showBrandingPanel)
@@ -153,17 +154,42 @@ export function BrandingConfigPanel() {
           </button>
         )}
 
-        <div className="flex justify-between pt-2 border-t border-slate-100">
-          <Button variant="ghost" size="sm" onClick={() => { resetBranding(); showToast('Branding reset to defaults.', 'success') }}>
-            Reset defaults
-          </Button>
+        {/* How to make changes permanent across all devices */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+          <div className="flex items-start gap-1.5">
+            <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-blue-500" />
+            <div>
+              <p className="font-semibold mb-1">To apply changes to all devices:</p>
+              <ol className="list-decimal list-inside space-y-0.5 text-blue-700">
+                <li>Make your changes above</li>
+                <li>Click <strong>Download brand-config.json</strong></li>
+                <li>Commit the file to the <code className="bg-blue-100 px-0.5 rounded">public/</code> folder in GitHub</li>
+                <li>The site redeploys and all users see the new branding</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
           <Button
             variant="primary"
             size="sm"
-            onClick={() => { setShowPanel(false); showToast('Settings saved.', 'success') }}
+            onClick={() => {
+              downloadBrandingConfig(branding)
+              showToast('brand-config.json downloaded — commit it to public/ in GitHub to apply sitewide.', 'success', 8000)
+            }}
           >
-            Save &amp; close
+            <Download className="w-3.5 h-3.5" />
+            Download brand-config.json
           </Button>
+          <div className="flex justify-between">
+            <Button variant="ghost" size="sm" onClick={() => { resetBranding(); showToast('Reset to defaults.', 'success') }}>
+              Reset defaults
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowPanel(false)}>
+              Close
+            </Button>
+          </div>
         </div>
       </div>
     </Dialog>
