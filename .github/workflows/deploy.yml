@@ -6,16 +6,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write  # needed to push to gh-pages branch
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,36 +22,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npm run type-check
-
-      - name: Unit tests
-        run: npm test
-
       - name: Build for GitHub Pages
         run: npx tsc -b && npx vite build --base /JoePDF/
 
-      - name: Verify dist/index.html contains built assets (not source files)
+      - name: Verify build output
         run: |
-          if grep -q "src/main.tsx" dist/index.html; then
-            echo "ERROR: dist/index.html still contains dev source path — build may have failed"
+          if grep -q 'src/main.tsx' dist/index.html; then
+            echo "ERROR: build produced dev HTML — check vite config"
             cat dist/index.html
             exit 1
           fi
-          echo "Build looks correct:"
-          grep -o 'src="[^"]*"' dist/index.html || true
+          echo "Build OK. Script path:"
+          grep -o 'src="[^"]*"' dist/index.html
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: ./dist
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true

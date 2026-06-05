@@ -73,6 +73,7 @@ describe('historySlice', () => {
     store.dispatch(mk(5))
     expect(useStore.getState().canRedo()).toBe(false)
     expect(useStore.getState().history.stack).toHaveLength(2)
+    void v // suppress unused-vars — v is mutated by side effects
   })
 })
 

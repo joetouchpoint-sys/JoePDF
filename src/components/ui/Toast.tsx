@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from 'react'
 import { clsx } from 'clsx'
 import { CheckCircle, AlertCircle, Info, X } from 'lucide-react'

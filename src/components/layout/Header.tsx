@@ -49,12 +49,6 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  useEffect(() => {
-    const handler = () => void handleExport()
-    window.addEventListener('joepdf:export', handler)
-    return () => window.removeEventListener('joepdf:export', handler)
-  })
-
   const checkForPendingRedactions = useCallback(() => {
     let count = 0
     for (const anns of useStore.getState().annotations.values()) {
@@ -64,17 +58,6 @@ export function Header() {
     }
     return count
   }, [])
-
-  const handleExportClick = useCallback(() => {
-    setExportMenuOpen(false)
-    const redactCount = checkForPendingRedactions()
-    if (redactCount > 0) {
-      setPendingRedactCount(redactCount)
-      setShowRedactConfirm(true)
-    } else {
-      void handleExport()
-    }
-  }, [checkForPendingRedactions])
 
   const handleExport = useCallback(async (applyRedactions = false) => {
     const store = useStore.getState()
@@ -124,6 +107,17 @@ export function Header() {
     }
   }, [setIsExporting, setIsDirty, setRasterisedPage])
 
+  const handleExportClick = useCallback(() => {
+    setExportMenuOpen(false)
+    const redactCount = checkForPendingRedactions()
+    if (redactCount > 0) {
+      setPendingRedactCount(redactCount)
+      setShowRedactConfirm(true)
+    } else {
+      void handleExport()
+    }
+  }, [checkForPendingRedactions, handleExport])
+
   const handleWordExport = useCallback(async () => {
     setExportMenuOpen(false)
     const { pdf } = useStore.getState()
@@ -144,6 +138,13 @@ export function Header() {
       setIsExporting(false)
     }
   }, [setIsExporting])
+
+  // Ctrl+S triggers PDF export — must be after handleExport declaration
+  useEffect(() => {
+    const handler = () => void handleExport()
+    window.addEventListener('joepdf:export', handler)
+    return () => window.removeEventListener('joepdf:export', handler)
+  }, [handleExport])
 
   const hasPDF = !!fileName
 

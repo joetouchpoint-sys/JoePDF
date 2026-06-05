@@ -27,7 +27,9 @@ function loadCreds(): AdminCreds {
   try {
     const raw = localStorage.getItem(CREDS_KEY)
     if (raw) return JSON.parse(raw) as AdminCreds
-  } catch {}
+  } catch {
+    // Ignore parse errors, use defaults
+  }
   return defaultCreds()
 }
 
