@@ -35,9 +35,17 @@ jobs:
         run: npm test
 
       - name: Build for GitHub Pages
-        run: npm run build
-        env:
-          VITE_BASE_URL: /JoePDF/
+        run: npx tsc -b && npx vite build --base /JoePDF/
+
+      - name: Verify dist/index.html contains built assets (not source files)
+        run: |
+          if grep -q "src/main.tsx" dist/index.html; then
+            echo "ERROR: dist/index.html still contains dev source path — build may have failed"
+            cat dist/index.html
+            exit 1
+          fi
+          echo "Build looks correct:"
+          grep -o 'src="[^"]*"' dist/index.html || true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
