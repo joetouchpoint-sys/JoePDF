@@ -12,6 +12,14 @@ export interface DrawingDefaults {
   highlightColor: string
 }
 
+export interface PendingStamp {
+  src: string
+  displayW: number
+  displayH: number
+  natW: number
+  natH: number
+}
+
 export interface UISlice {
   ui: {
     activeTool: Tool
@@ -29,8 +37,11 @@ export interface UISlice {
     drawingDefaults: DrawingDefaults
     newlyCreatedId: string | null
     splitByGroupsOpen: boolean
+    splitPageDialogOpen: boolean
+    mergePDFDialogOpen: boolean
     compressDialogOpen: boolean
     signatureDialogOpen: boolean
+    pendingStamp: PendingStamp | null
   }
   setActiveTool: (tool: Tool) => void
   setZoom: (zoom: number) => void
@@ -47,20 +58,23 @@ export interface UISlice {
   setDrawingDefaults: (d: Partial<DrawingDefaults>) => void
   setNewlyCreatedId: (id: string | null) => void
   setSplitByGroupsOpen: (open: boolean) => void
+  setSplitPageDialogOpen: (open: boolean) => void
+  setMergePDFDialogOpen: (open: boolean) => void
   setCompressDialogOpen: (open: boolean) => void
   setSignatureDialogOpen: (open: boolean) => void
+  setPendingStamp: (stamp: PendingStamp | null) => void
   resetUI: () => void
 }
 
 const initialDrawingDefaults: DrawingDefaults = {
-  strokeColor: '#178351',   // Family Action green
+  strokeColor: '#178351',
   strokeNone: false,
   fillColor: null,
   strokeWidth: 2,
   fontSize: 16,
   fontFamily: 'DM Sans',
-  fontColor: '#292C4F',     // Navy blue
-  highlightColor: '#A0DA00', // Lime green
+  fontColor: '#292C4F',
+  highlightColor: '#A0DA00',
 }
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
@@ -81,8 +95,11 @@ const initialUI = {
   drawingDefaults: initialDrawingDefaults,
   newlyCreatedId: null,
   splitByGroupsOpen: false,
+  splitPageDialogOpen: false,
+  mergePDFDialogOpen: false,
   compressDialogOpen: false,
   signatureDialogOpen: false,
+  pendingStamp: null as PendingStamp | null,
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
@@ -114,7 +131,10 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
     set((s) => ({ ui: { ...s.ui, drawingDefaults: { ...s.ui.drawingDefaults, ...d } } })),
   setNewlyCreatedId: (id) => set((s) => ({ ui: { ...s.ui, newlyCreatedId: id } })),
   setSplitByGroupsOpen: (open) => set((s) => ({ ui: { ...s.ui, splitByGroupsOpen: open } })),
+  setSplitPageDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, splitPageDialogOpen: open } })),
+  setMergePDFDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, mergePDFDialogOpen: open } })),
   setCompressDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, compressDialogOpen: open } })),
   setSignatureDialogOpen: (open) => set((s) => ({ ui: { ...s.ui, signatureDialogOpen: open } })),
+  setPendingStamp: (stamp) => set((s) => ({ ui: { ...s.ui, pendingStamp: stamp } })),
   resetUI: () => set({ ui: initialUI }),
 })

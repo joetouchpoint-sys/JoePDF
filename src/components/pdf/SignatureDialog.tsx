@@ -2,9 +2,8 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import { X, Trash2, PenLine, Type, Image as ImageIcon, Check, Upload as UploadIcon } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useStore } from '@/store'
-import { useHistory } from '@/hooks/useHistory'
-import { AddAnnotationCommand } from '@/commands/AddAnnotationCommand'
-import type { ImageAnnotation } from '@/types/annotation'
+import { Tool } from '@/types/tool'
+import type { PendingStamp } from '@/store/uiSlice'
 
 type SignTab = 'draw' | 'type' | 'upload'
 
@@ -17,6 +16,7 @@ const SIGN_FONTS = [
 
 const CANVAS_W = 380
 const CANVAS_H = 140
+const INK_COLOR = '#1a1a2e'
 
 function getCanvasPoint(e: React.PointerEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) {
   const rect = canvas.getBoundingClientRect()
@@ -29,8 +29,8 @@ function getCanvasPoint(e: React.PointerEvent<HTMLCanvasElement>, canvas: HTMLCa
 export function SignatureDialog() {
   const open = useStore((s) => s.ui.signatureDialogOpen)
   const setOpen = useStore((s) => s.setSignatureDialogOpen)
-  const currentPage = useStore((s) => s.ui.currentPage)
-  const { dispatch } = useHistory()
+  const setActiveTool = useStore((s) => s.setActiveTool)
+  const setPendingStamp = useStore((s) => s.setPendingStamp)
 
   const [tab, setTab] = useState<SignTab>('draw')
   const [typedText, setTypedText] = useState('')
@@ -41,6 +41,8 @@ export function SignatureDialog() {
   const drawCanvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
   const lastPointRef = useRef<{ x: number; y: number } | null>(null)
+  // Track the last drawn midpoint for continuous bezier curves
+  const prevMidRef = useRef<{ x: number; y: number } | null>(null)
   const uploadInputRef = useRef<HTMLInputElement>(null)
 
   const resetCanvas = useCallback(() => {
@@ -49,6 +51,7 @@ export function SignatureDialog() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    // Baseline guide
     ctx.strokeStyle = '#e2e8f0'
     ctx.lineWidth = 1
     ctx.setLineDash([])
@@ -75,20 +78,17 @@ export function SignatureDialog() {
     const pt = getCanvasPoint(e, canvas)
     isDrawingRef.current = true
     lastPointRef.current = pt
-    ctx.strokeStyle = '#1a1a2e'
-    ctx.fillStyle = '#1a1a2e'
-    ctx.lineWidth = 2.5
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
+    prevMidRef.current = pt   // first "previous mid" is the start point itself
+    ctx.fillStyle = INK_COLOR
     ctx.setLineDash([])
     ctx.beginPath()
-    ctx.arc(pt.x, pt.y, 1.25, 0, Math.PI * 2)
+    ctx.arc(pt.x, pt.y, 1.5, 0, Math.PI * 2)
     ctx.fill()
     setHasDrawing(true)
   }, [])
 
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawingRef.current || !lastPointRef.current) return
+    if (!isDrawingRef.current || !lastPointRef.current || !prevMidRef.current) return
     const canvas = drawCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -98,21 +98,40 @@ export function SignatureDialog() {
       x: (lastPointRef.current.x + current.x) / 2,
       y: (lastPointRef.current.y + current.y) / 2,
     }
-    ctx.strokeStyle = '#1a1a2e'
+    // Draw from previous midpoint → current midpoint using lastPoint as control.
+    // This creates a continuous, gapless bezier chain.
+    ctx.strokeStyle = INK_COLOR
     ctx.lineWidth = 2.5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
     ctx.setLineDash([])
     ctx.beginPath()
-    ctx.moveTo(lastPointRef.current.x, lastPointRef.current.y)
+    ctx.moveTo(prevMidRef.current.x, prevMidRef.current.y)
     ctx.quadraticCurveTo(lastPointRef.current.x, lastPointRef.current.y, mid.x, mid.y)
     ctx.stroke()
+    prevMidRef.current = mid
     lastPointRef.current = current
   }, [])
 
   const onPointerUp = useCallback(() => {
+    // Draw the final segment to the last actual point
+    if (isDrawingRef.current && lastPointRef.current && prevMidRef.current) {
+      const canvas = drawCanvasRef.current
+      const ctx = canvas?.getContext('2d')
+      if (ctx) {
+        ctx.strokeStyle = INK_COLOR
+        ctx.lineWidth = 2.5
+        ctx.lineCap = 'round'
+        ctx.setLineDash([])
+        ctx.beginPath()
+        ctx.moveTo(prevMidRef.current.x, prevMidRef.current.y)
+        ctx.lineTo(lastPointRef.current.x, lastPointRef.current.y)
+        ctx.stroke()
+      }
+    }
     isDrawingRef.current = false
     lastPointRef.current = null
+    prevMidRef.current = null
   }, [])
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,18 +157,18 @@ export function SignatureDialog() {
     } else if (tab === 'type') {
       if (!typedText.trim()) return
       const offscreen = document.createElement('canvas')
-      offscreen.width = 600
-      offscreen.height = 150
-      const ctx = offscreen.getContext('2d')!
       try { await document.fonts.load(`64px "${selectedFont}"`) } catch { /* ok */ }
-      ctx.font = `64px "${selectedFont}"`
-      const measured = ctx.measureText(typedText)
-      offscreen.width = Math.max(Math.ceil(measured.width) + 40, 100)
+      const measure = document.createElement('canvas')
+      const mctx = measure.getContext('2d')!
+      mctx.font = `64px "${selectedFont}"`
+      const metrics = mctx.measureText(typedText)
+      offscreen.width = Math.max(Math.ceil(metrics.width) + 40, 100)
       offscreen.height = 120
+      const ctx = offscreen.getContext('2d')!
       ctx.font = `64px "${selectedFont}"`
       ctx.textBaseline = 'middle'
       ctx.textAlign = 'left'
-      ctx.fillStyle = '#1a1a2e'
+      ctx.fillStyle = INK_COLOR
       ctx.fillText(typedText, 20, 60)
       src = offscreen.toDataURL('image/png')
       natW = offscreen.width
@@ -170,22 +189,9 @@ export function SignatureDialog() {
     const displayW = Math.min(240, natW)
     const displayH = Math.round((displayW / natW) * natH)
 
-    const ann: ImageAnnotation = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      type: 'image',
-      pageIndex: currentPage,
-      x: 80,
-      y: 420,
-      width: displayW,
-      height: displayH,
-      opacity: 1,
-      visible: true,
-      src,
-      naturalWidth: natW,
-      naturalHeight: natH,
-    }
-
-    dispatch(new AddAnnotationCommand(currentPage, ann))
+    const stamp: PendingStamp = { src, displayW, displayH, natW, natH }
+    setPendingStamp(stamp)
+    setActiveTool(Tool.STAMP)
     setOpen(false)
     setTypedText('')
     setUploadedSrc(null)
@@ -208,11 +214,10 @@ export function SignatureDialog() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-100">
           <div>
             <h3 className="font-semibold text-slate-800">Sign PDF</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Signature will be placed on the current page</p>
+            <p className="text-xs text-slate-500 mt-0.5">Click to place your signature — stamp it as many times as you like</p>
           </div>
           <button
             onClick={() => setOpen(false)}
@@ -222,7 +227,6 @@ export function SignatureDialog() {
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b border-slate-100">
           {tabs.map((t) => (
             <button
@@ -242,7 +246,6 @@ export function SignatureDialog() {
         </div>
 
         <div className="p-5">
-          {/* Draw tab */}
           {tab === 'draw' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -266,11 +269,10 @@ export function SignatureDialog() {
                 onPointerUp={onPointerUp}
                 onPointerLeave={onPointerUp}
               />
-              <p className="text-[11px] text-slate-400 text-center">Use mouse or touch to draw your signature</p>
+              <p className="text-[11px] text-slate-400 text-center">Use mouse or touch to draw</p>
             </div>
           )}
 
-          {/* Type tab */}
           {tab === 'type' && (
             <div className="space-y-3">
               <input
@@ -295,7 +297,7 @@ export function SignatureDialog() {
                   >
                     <span
                       className="block text-xl leading-tight truncate"
-                      style={{ fontFamily: `"${f.name}", cursive`, color: '#1a1a2e' }}
+                      style={{ fontFamily: `"${f.name}", cursive`, color: INK_COLOR }}
                     >
                       {typedText || 'Your name'}
                     </span>
@@ -306,7 +308,6 @@ export function SignatureDialog() {
             </div>
           )}
 
-          {/* Upload tab */}
           {tab === 'upload' && (
             <div className="space-y-3">
               {uploadedSrc ? (
@@ -314,11 +315,7 @@ export function SignatureDialog() {
                   className="relative border border-slate-200 rounded-lg p-4 flex items-center justify-center bg-slate-50"
                   style={{ minHeight: '130px' }}
                 >
-                  <img
-                    src={uploadedSrc}
-                    alt="Signature preview"
-                    className="max-h-24 max-w-full object-contain"
-                  />
+                  <img src={uploadedSrc} alt="Signature preview" className="max-h-24 max-w-full object-contain" />
                   <button
                     onClick={() => setUploadedSrc(null)}
                     className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-300 transition-colors"
@@ -336,18 +333,11 @@ export function SignatureDialog() {
                   <span className="text-xs">PNG with transparent background works best</span>
                 </button>
               )}
-              <input
-                ref={uploadInputRef}
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={handleUpload}
-              />
+              <input ref={uploadInputRef} type="file" accept="image/*" className="sr-only" onChange={handleUpload} />
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex gap-2 px-5 pb-5">
           <button
             onClick={() => setOpen(false)}
@@ -362,7 +352,7 @@ export function SignatureDialog() {
             style={{ backgroundColor: 'var(--color-primary)' }}
           >
             <Check className="w-3.5 h-3.5" />
-            Place signature
+            Start stamping
           </button>
         </div>
       </div>

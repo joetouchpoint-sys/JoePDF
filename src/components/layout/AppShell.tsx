@@ -8,6 +8,8 @@ import { BrandingConfigPanel } from '@/components/branding/BrandingConfigPanel'
 import { SplitByGroupsDialog } from '@/components/pdf/SplitByGroupsDialog'
 import { CompressDialog } from '@/components/pdf/CompressDialog'
 import { SignatureDialog } from '@/components/pdf/SignatureDialog'
+import { SplitPageDialog } from '@/components/pdf/SplitPageDialog'
+import { MergePDFDialog } from '@/components/pdf/MergePDFDialog'
 import { ToastContainer } from '@/components/ui/Toast'
 import { usePDFDocument } from '@/hooks/usePDFDocument'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -101,6 +103,8 @@ export function AppShell() {
       <SplitByGroupsDialog />
       <CompressDialog />
       <SignatureDialog />
+      <SplitPageDialog />
+      <MergePDFDialog />
       <ToastContainer />
     </BrandingProvider>
   )

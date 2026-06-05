@@ -82,6 +82,25 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       const pos = getPos(e)
       const id = generateId()
 
+      // Stamp: place signature/image at click position (stays in STAMP mode for multi-stamp)
+      if (activeTool === Tool.STAMP) {
+        const stamp = useStore.getState().ui.pendingStamp
+        if (!stamp) return
+        const ann: ImageAnnotation = {
+          id, type: 'image', pageIndex,
+          x: pos.x - stamp.displayW / (2 * zoom),
+          y: pos.y - stamp.displayH / (2 * zoom),
+          width: stamp.displayW / zoom,
+          height: stamp.displayH / zoom,
+          src: stamp.src,
+          naturalWidth: stamp.natW,
+          naturalHeight: stamp.natH,
+          opacity: 1, visible: true,
+        }
+        dispatch(new AddAnnotationCommand(pageIndex, ann))
+        return
+      }
+
       // Text: single click places a text box and immediately opens editor
       if (activeTool === Tool.TEXT) {
         const ann: TextAnnotation = {
@@ -331,6 +350,7 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
 function getCursor(tool: Tool): string {
   switch (tool) {
     case Tool.TEXT: return 'text'
+    case Tool.STAMP: return 'copy'
     case Tool.REDACT:
     case Tool.RECT:
     case Tool.ELLIPSE:

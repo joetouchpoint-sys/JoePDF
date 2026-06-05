@@ -2,7 +2,7 @@ import {
   MousePointer2, Type, Square, Circle, Minus, ArrowRight,
   Pencil, Highlighter, Image as ImageIcon, EraserIcon,
   ChevronRight, ChevronLeft, MousePointerClick, LayoutGrid,
-  FileArchive, PenLine,
+  FileArchive, PenLine, Scissors, Layers,
 } from 'lucide-react'
 import { Tool } from '@/types/tool'
 import { ToolButton } from './ToolButton'
@@ -58,6 +58,16 @@ const toolGroups: ToolGroupDef[] = [
   },
 ]
 
+interface PageTool {
+  key: string
+  label: string
+  shortcut: string
+  icon: React.ReactNode
+  tooltip: string
+  onClick: () => void
+  disabled: boolean
+}
+
 export function ToolBar() {
   const expanded = useStore((s) => s.ui.toolbarExpanded)
   const setExpanded = useStore((s) => s.setToolbarExpanded)
@@ -65,8 +75,43 @@ export function ToolBar() {
   const setTextSelectMode = useStore((s) => s.setTextSelectMode)
   const hasPDF = useStore((s) => !!s.pdf.pdfBytes)
   const setSplitByGroupsOpen = useStore((s) => s.setSplitByGroupsOpen)
+  const setSplitPageDialogOpen = useStore((s) => s.setSplitPageDialogOpen)
+  const setMergePDFDialogOpen = useStore((s) => s.setMergePDFDialogOpen)
   const setCompressDialogOpen = useStore((s) => s.setCompressDialogOpen)
   const setSignatureDialogOpen = useStore((s) => s.setSignatureDialogOpen)
+
+  const pageTools: PageTool[] = [
+    {
+      key: 'split', label: 'Split PDF', shortcut: 'Z',
+      icon: <Scissors className="w-4 h-4 flex-shrink-0" />,
+      tooltip: 'Split PDF into two files at a page boundary',
+      onClick: () => setSplitPageDialogOpen(true), disabled: !hasPDF,
+    },
+    {
+      key: 'merge', label: 'Merge PDFs', shortcut: 'M',
+      icon: <Layers className="w-4 h-4 flex-shrink-0" />,
+      tooltip: 'Merge two PDFs into one',
+      onClick: () => setMergePDFDialogOpen(true), disabled: !hasPDF,
+    },
+    {
+      key: 'groups', label: 'Split by groups', shortcut: 'G',
+      icon: <LayoutGrid className="w-4 h-4 flex-shrink-0" />,
+      tooltip: 'Split PDF into equal-size page groups',
+      onClick: () => setSplitByGroupsOpen(true), disabled: !hasPDF,
+    },
+    {
+      key: 'compress', label: 'Compress PDF', shortcut: 'C',
+      icon: <FileArchive className="w-4 h-4 flex-shrink-0" />,
+      tooltip: 'Compress PDF to reduce file size',
+      onClick: () => setCompressDialogOpen(true), disabled: !hasPDF,
+    },
+    {
+      key: 'sign', label: 'Sign PDF', shortcut: 'S',
+      icon: <PenLine className="w-4 h-4 flex-shrink-0" />,
+      tooltip: 'Sign PDF — draw, type, or upload a signature',
+      onClick: () => setSignatureDialogOpen(true), disabled: !hasPDF,
+    },
+  ]
 
   return (
     <aside
@@ -123,67 +168,31 @@ export function ToolBar() {
             Page tools
           </p>
         )}
-        <Tooltip content="Split PDF into equal-size page groups" shortcut="G" side="right">
-          <button
-            type="button"
-            onClick={() => setSplitByGroupsOpen(true)}
-            disabled={!hasPDF}
-            aria-label="Split into page groups"
-            className={clsx(
-              'flex items-center gap-2 rounded-lg transition-all duration-100',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
-              hasPDF
-                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-                : 'text-slate-300 cursor-not-allowed',
-            )}
-          >
-            <LayoutGrid className="w-4 h-4 flex-shrink-0" />
-            {expanded && <span className="flex-1 truncate">Split by groups</span>}
-            {expanded && <span className="ml-auto text-[10px] opacity-40 flex-shrink-0">G</span>}
-          </button>
-        </Tooltip>
-        <Tooltip content="Compress PDF to reduce file size" side="right">
-          <button
-            type="button"
-            onClick={() => setCompressDialogOpen(true)}
-            disabled={!hasPDF}
-            aria-label="Compress PDF"
-            className={clsx(
-              'flex items-center gap-2 rounded-lg transition-all duration-100',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
-              hasPDF
-                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-                : 'text-slate-300 cursor-not-allowed',
-            )}
-          >
-            <FileArchive className="w-4 h-4 flex-shrink-0" />
-            {expanded && <span className="flex-1 truncate">Compress PDF</span>}
-          </button>
-        </Tooltip>
-        <Tooltip content="Sign PDF — draw, type, or upload a signature" side="right">
-          <button
-            type="button"
-            onClick={() => setSignatureDialogOpen(true)}
-            disabled={!hasPDF}
-            aria-label="Sign PDF"
-            className={clsx(
-              'flex items-center gap-2 rounded-lg transition-all duration-100',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
-              hasPDF
-                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-                : 'text-slate-300 cursor-not-allowed',
-            )}
-          >
-            <PenLine className="w-4 h-4 flex-shrink-0" />
-            {expanded && <span className="flex-1 truncate">Sign PDF</span>}
-          </button>
-        </Tooltip>
+        {pageTools.map((pt) => (
+          <Tooltip key={pt.key} content={pt.tooltip} shortcut={pt.shortcut} side="right">
+            <button
+              type="button"
+              onClick={pt.onClick}
+              disabled={pt.disabled}
+              aria-label={pt.label}
+              className={clsx(
+                'flex items-center gap-2 rounded-lg transition-all duration-100',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+                expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+                pt.disabled
+                  ? 'text-slate-300 cursor-not-allowed'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800',
+              )}
+            >
+              {pt.icon}
+              {expanded && <span className="flex-1 truncate">{pt.label}</span>}
+              {expanded && <span className="ml-auto text-[10px] opacity-40 flex-shrink-0">{pt.shortcut}</span>}
+            </button>
+          </Tooltip>
+        ))}
       </div>
 
-      {/* Text select mode — allows copying text from PDF */}
+      {/* Text select mode */}
       <div className="border-t border-slate-100 pt-2 mt-1 px-1.5">
         {expanded && (
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1 mb-0.5">

@@ -27,14 +27,19 @@ export function useKeyboardShortcuts() {
 
       if (ctrl && e.key === 's') {
         e.preventDefault()
-        // Trigger export via custom event
         window.dispatchEvent(new CustomEvent('joepdf:export'))
         return
       }
 
       if (e.key === 'Escape') {
-        useStore.getState().setActiveTool(Tool.SELECT)
-        useStore.getState().setSelectedAnnotationId(null)
+        const { ui, setActiveTool, setSelectedAnnotationId, setPendingStamp } = useStore.getState()
+        if (ui.activeTool === Tool.STAMP) {
+          setActiveTool(Tool.SELECT)
+          setPendingStamp(null)
+        } else {
+          setActiveTool(Tool.SELECT)
+          setSelectedAnnotationId(null)
+        }
         return
       }
 
@@ -46,7 +51,6 @@ export function useKeyboardShortcuts() {
         return
       }
 
-      // Tool shortcuts
       if (!ctrl) {
         // Q — toggle text-select mode
         if (e.key === 'q' || e.key === 'Q') {
@@ -58,7 +62,50 @@ export function useKeyboardShortcuts() {
         // G — open split by groups dialog
         if (e.key === 'g' || e.key === 'G') {
           const hasPDF = !!useStore.getState().pdf.pdfBytes
-          if (hasPDF) useStore.getState().setSplitByGroupsOpen(true)
+          if (hasPDF) {
+            e.preventDefault()
+            useStore.getState().setSplitByGroupsOpen(true)
+          }
+          return
+        }
+
+        // Z — open split page dialog
+        if (e.key === 'z' || e.key === 'Z') {
+          const hasPDF = !!useStore.getState().pdf.pdfBytes
+          if (hasPDF) {
+            e.preventDefault()
+            useStore.getState().setSplitPageDialogOpen(true)
+          }
+          return
+        }
+
+        // M — open merge PDF dialog
+        if (e.key === 'm' || e.key === 'M') {
+          const hasPDF = !!useStore.getState().pdf.pdfBytes
+          if (hasPDF) {
+            e.preventDefault()
+            useStore.getState().setMergePDFDialogOpen(true)
+          }
+          return
+        }
+
+        // C — open compress dialog
+        if (e.key === 'c' || e.key === 'C') {
+          const hasPDF = !!useStore.getState().pdf.pdfBytes
+          if (hasPDF) {
+            e.preventDefault()
+            useStore.getState().setCompressDialogOpen(true)
+          }
+          return
+        }
+
+        // S — open sign dialog
+        if (e.key === 's' || e.key === 'S') {
+          const hasPDF = !!useStore.getState().pdf.pdfBytes
+          if (hasPDF) {
+            e.preventDefault()
+            useStore.getState().setSignatureDialogOpen(true)
+          }
           return
         }
 

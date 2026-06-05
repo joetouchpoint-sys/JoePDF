@@ -9,6 +9,7 @@ export enum Tool {
   HIGHLIGHT = 'HIGHLIGHT',
   REDACT = 'REDACT',
   IMAGE = 'IMAGE',
+  STAMP = 'STAMP',
 }
 
 export interface ToolInfo {

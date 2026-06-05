@@ -13,6 +13,7 @@ export function SplitByGroupsDialog() {
 
   const [rawValue, setRawValue] = useState('2')
   const [isSplitting, setIsSplitting] = useState(false)
+  const [useZip, setUseZip] = useState(false)
 
   if (!open) return null
 
@@ -30,6 +31,7 @@ export function SplitByGroupsDialog() {
   const remainder = isValid ? pageCount % groupSize : 0
   const lastGroupSize = remainder === 0 ? groupSize : remainder
   const isUneven = isValid && lastGroupSize !== groupSize
+  const offerZip = isValid && numGroups >= 5
 
   const handleClose = () => {
     if (!isSplitting) setSplitByGroupsOpen(false)
@@ -43,6 +45,9 @@ export function SplitByGroupsDialog() {
       const srcDoc = await PDFDocument.load(pdfBytes)
       const base = (fileName ?? 'document').replace(/\.pdf$/i, '')
 
+      type GroupFile = { name: string; bytes: Uint8Array }
+      const files: GroupFile[] = []
+
       for (let g = 0; g < numGroups; g++) {
         const startIdx = g * groupSize
         const endIdx = Math.min(startIdx + groupSize, pageCount)
@@ -54,15 +59,26 @@ export function SplitByGroupsDialog() {
         const pages = await outDoc.copyPages(srcDoc, srcIndices)
         pages.forEach(p => outDoc.addPage(p))
         const bytes = await outDoc.save()
-        const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
-        downloadFile(new Uint8Array(ab), `${base}-group${g + 1}-pages${startIdx + 1}-${endIdx}.pdf`)
+        files.push({
+          name: `${base}-group${g + 1}-pages${startIdx + 1}-${endIdx}.pdf`,
+          bytes,
+        })
+      }
 
-        if (g < numGroups - 1) {
-          await new Promise<void>(resolve => setTimeout(resolve, 250))
+      if (useZip && offerZip) {
+        const JSZip = (await import('jszip')).default
+        const zip = new JSZip()
+        for (const f of files) zip.file(f.name, f.bytes)
+        const zipBytes = await zip.generateAsync({ type: 'uint8array', compression: 'STORE' })
+        downloadFile(zipBytes, `${base}-groups.zip`, 'application/zip')
+      } else {
+        for (let i = 0; i < files.length; i++) {
+          downloadFile(files[i]!.bytes, files[i]!.name)
+          if (i < files.length - 1) await new Promise<void>(r => setTimeout(r, 250))
         }
       }
 
-      showToast(`Split into ${numGroups} PDF${numGroups > 1 ? 's' : ''} — check your downloads.`, 'success')
+      showToast(`Split into ${numGroups} PDF${numGroups > 1 ? 's' : ''}${useZip && offerZip ? ' (zipped)' : ''} — check your downloads.`, 'success')
       setSplitByGroupsOpen(false)
     } catch {
       showToast('Failed to split PDF into groups.', 'error')
@@ -121,7 +137,7 @@ export function SplitByGroupsDialog() {
                     </span>
                   )}
                 </p>
-                {numGroups > 15 && (
+                {numGroups > 15 && !useZip && (
                   <p className="text-amber-600">
                     Your browser may ask permission before downloading {numGroups} files.
                   </p>
@@ -129,6 +145,22 @@ export function SplitByGroupsDialog() {
               </div>
             )}
           </div>
+
+          {/* ZIP option — only shown for 5+ groups */}
+          {offerZip && (
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={useZip}
+                onChange={(e) => setUseZip(e.target.checked)}
+                className="w-4 h-4 rounded accent-[--color-primary]"
+              />
+              <span className="text-sm text-slate-700">
+                Download as a single ZIP file
+                <span className="text-xs text-slate-400 ml-1">({numGroups} PDFs inside)</span>
+              </span>
+            </label>
+          )}
 
           {isValid && (
             <div className="rounded-lg border border-slate-100 px-3 py-2 text-xs text-slate-500">
