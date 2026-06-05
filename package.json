@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:ghpages": "tsc -b && VITE_BASE_URL=/JoePDF/ vite build",
+    "build:ghpages": "tsc -b && VITE_BASE_URL=/ vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
