@@ -6,6 +6,13 @@ import { Tool } from '@/types/tool'
 import type { PendingStamp } from '@/store/uiSlice'
 
 type SignTab = 'draw' | 'type' | 'upload'
+type StampSize = 'small' | 'medium' | 'large'
+
+const STAMP_SIZE_PX: Record<StampSize, number> = {
+  small: 90,
+  medium: 150,
+  large: 230,
+}
 
 const SIGN_FONTS = [
   { name: 'Dancing Script', label: 'Formal' },
@@ -37,6 +44,7 @@ export function SignatureDialog() {
   const [selectedFont, setSelectedFont] = useState<string>(SIGN_FONTS[0].name)
   const [uploadedSrc, setUploadedSrc] = useState<string | null>(null)
   const [hasDrawing, setHasDrawing] = useState(false)
+  const [stampSize, setStampSize] = useState<StampSize>('medium')
 
   const drawCanvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
@@ -51,14 +59,6 @@ export function SignatureDialog() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    // Baseline guide
-    ctx.strokeStyle = '#e2e8f0'
-    ctx.lineWidth = 1
-    ctx.setLineDash([])
-    ctx.beginPath()
-    ctx.moveTo(20, Math.round(canvas.height * 0.72))
-    ctx.lineTo(canvas.width - 20, Math.round(canvas.height * 0.72))
-    ctx.stroke()
     setHasDrawing(false)
   }, [])
 
@@ -186,7 +186,8 @@ export function SignatureDialog() {
 
     if (!src) return
 
-    const displayW = Math.min(240, natW)
+    const targetW = STAMP_SIZE_PX[stampSize]
+    const displayW = Math.min(targetW, natW)
     const displayH = Math.round((displayW / natW) * natH)
 
     const stamp: PendingStamp = { src, displayW, displayH, natW, natH }
@@ -258,17 +259,24 @@ export function SignatureDialog() {
                   Clear
                 </button>
               </div>
-              <canvas
-                ref={drawCanvasRef}
-                width={CANVAS_W}
-                height={CANVAS_H}
-                className="w-full border border-slate-200 rounded-lg bg-white cursor-crosshair select-none"
-                style={{ touchAction: 'none' }}
-                onPointerDown={onPointerDown}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-                onPointerLeave={onPointerUp}
-              />
+              <div className="relative">
+                {/* Baseline guide — CSS only, not drawn on canvas so it won't appear in the exported stamp */}
+                <div
+                  className="absolute left-4 right-4 border-b border-slate-200 pointer-events-none"
+                  style={{ top: `${(CANVAS_H * 0.72 / CANVAS_H) * 100}%` }}
+                />
+                <canvas
+                  ref={drawCanvasRef}
+                  width={CANVAS_W}
+                  height={CANVAS_H}
+                  className="w-full border border-slate-200 rounded-lg bg-transparent cursor-crosshair select-none"
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={onPointerDown}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onPointerLeave={onPointerUp}
+                />
+              </div>
               <p className="text-[11px] text-slate-400 text-center">Use mouse or touch to draw</p>
             </div>
           )}
@@ -336,6 +344,28 @@ export function SignatureDialog() {
               <input ref={uploadInputRef} type="file" accept="image/*" className="sr-only" onChange={handleUpload} />
             </div>
           )}
+        </div>
+
+        {/* Size selector */}
+        <div className="px-5 pb-3 flex items-center gap-3">
+          <span className="text-xs text-slate-500 flex-shrink-0">Stamp size</span>
+          <div className="flex gap-1.5">
+            {(['small', 'medium', 'large'] as const).map((sz) => (
+              <button
+                key={sz}
+                type="button"
+                onClick={() => setStampSize(sz)}
+                className={clsx(
+                  'px-3 py-1 rounded-md text-xs font-medium border transition-colors capitalize',
+                  stampSize === sz
+                    ? 'border-[--color-primary] text-[--color-primary] bg-[--color-primary]/5'
+                    : 'border-slate-200 text-slate-500 hover:border-slate-300',
+                )}
+              >
+                {sz.charAt(0).toUpperCase() + sz.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-2 px-5 pb-5">

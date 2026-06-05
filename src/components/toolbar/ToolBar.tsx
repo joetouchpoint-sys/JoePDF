@@ -178,14 +178,14 @@ export function ToolBar() {
               className={clsx(
                 'flex items-center gap-2 rounded-lg transition-all duration-100',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-                expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+                expanded ? 'w-full px-2 py-1.5 text-xs font-medium text-left' : 'w-9 h-9 justify-center',
                 pt.disabled
                   ? 'text-slate-300 cursor-not-allowed'
                   : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800',
               )}
             >
-              {pt.icon}
-              {expanded && <span className="flex-1 truncate">{pt.label}</span>}
+              <span className="flex-shrink-0">{pt.icon}</span>
+              {expanded && <span className="truncate">{pt.label}</span>}
               {expanded && <span className="ml-auto text-[10px] opacity-40 flex-shrink-0">{pt.shortcut}</span>}
             </button>
           </Tooltip>
