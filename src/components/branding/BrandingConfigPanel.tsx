@@ -471,7 +471,7 @@ export function BrandingConfigPanel() {
             aria-label="Heading font family"
             className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
           >
-            <option value="'Nunito', 'VAG Rounded', system-ui, sans-serif">Nunito (default)</option>
+            <option value="'DM Sans', system-ui, sans-serif">DM Sans (default)</option>
             <option value="system-ui, sans-serif">System default</option>
             <option value="'Arial', sans-serif">Arial</option>
             <option value="'Georgia', serif">Georgia</option>

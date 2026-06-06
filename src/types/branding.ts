@@ -38,7 +38,7 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   footerText: '',
   supportEmail: '',
   privacyNotice: '',
-  headingFontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif",
+  headingFontFamily: "'DM Sans', system-ui, sans-serif",
   headingCustomFontBase64: null,
   headingCustomFontName: '',
   bodyFontFamily: 'Helvetica',
