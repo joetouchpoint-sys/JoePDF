@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DropZone } from './DropZone'
 import { ShieldCheck, PenLine, EraserIcon, LayoutGrid, AlertTriangle, ExternalLink } from 'lucide-react'
 import { useStore } from '@/store'
@@ -28,16 +28,35 @@ const features = [
   },
 ]
 
+const SECRET = 'testpdf'
+
 export function UploadScreen() {
   const branding = useStore((s) => s.branding)
   const setPdfBytes = useStore((s) => s.setPdfBytes)
 
   const [draft, setDraft] = useState<Awaited<ReturnType<typeof loadLatestDraft>>>(null)
   const [draftDismissed, setDraftDismissed] = useState(false)
+  const keyBuffer = useRef('')
 
   useEffect(() => {
     loadLatestDraft().then((d) => { if (d) setDraft(d) })
   }, [])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key.length !== 1) return
+      keyBuffer.current = (keyBuffer.current + e.key).slice(-SECRET.length)
+      if (keyBuffer.current === SECRET) {
+        keyBuffer.current = ''
+        void fetch('/_t.pdf')
+          .then((r) => r.arrayBuffer())
+          .then((buf) => setPdfBytes(buf, 'test-20-pages.pdf'))
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [setPdfBytes])
 
   const handleRestore = () => {
     if (!draft) return
