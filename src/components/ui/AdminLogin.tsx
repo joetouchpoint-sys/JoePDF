@@ -57,7 +57,7 @@ export function AdminLogin({ onSuccess, onCancel }: AdminLoginProps) {
           <div className="text-center">
             <h2
               className="text-lg font-bold"
-              style={{ color: '#292C4F', fontFamily: "'Nunito', system-ui" }}
+              style={{ color: '#292C4F' }}
             >
               Admin access required
             </h2>

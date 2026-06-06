@@ -101,14 +101,14 @@ export function UploadScreen() {
       <div className="text-center flex-shrink-0">
         <p
           className="text-sm font-semibold uppercase tracking-widest mb-1.5"
-          style={{ color: branding.primaryColor || '#178351', fontFamily: branding.headingFontFamily }}
+          style={{ color: branding.primaryColor || '#178351' }}
         >
           {branding.orgName}
         </p>
         {branding.logoDataUrl ? (
           <img src={branding.logoDataUrl} alt={branding.appName} className="h-12 w-auto object-contain mx-auto mb-2" />
         ) : (
-          <h1 className="text-2xl font-bold mb-1.5" style={{ color: branding.secondaryColor || '#292C4F', fontFamily: branding.headingFontFamily }}>
+          <h1 className="text-2xl font-bold mb-1.5" style={{ color: branding.secondaryColor || '#292C4F' }}>
             {branding.appName}
           </h1>
         )}
@@ -131,7 +131,7 @@ export function UploadScreen() {
             >
               <Icon className="w-4 h-4" style={{ color: branding.primaryColor || '#178351' }} />
             </div>
-            <p className="text-xs font-bold leading-tight" style={{ color: branding.secondaryColor || '#292C4F', fontFamily: "'Nunito','VAG Rounded',system-ui" }}>
+            <p className="text-xs font-bold leading-tight" style={{ color: branding.secondaryColor || '#292C4F' }}>
               {title}
             </p>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>

@@ -26,6 +26,18 @@ export async function fetchDeployedConfig(): Promise<BrandingConfig | null> {
   }
 }
 
+function pdfFontToCss(family: string): string {
+  switch (family.toLowerCase()) {
+    case 'helvetica': return "'Helvetica Neue', Helvetica, Arial, sans-serif"
+    case 'times-roman': case 'times': return "'Times New Roman', Times, serif"
+    case 'courier': return "'Courier New', Courier, monospace"
+    case 'arial': return 'Arial, Helvetica, sans-serif'
+    case 'georgia': return "Georgia, 'Times New Roman', serif"
+    case 'verdana': return 'Verdana, Geneva, sans-serif'
+    default: return family
+  }
+}
+
 /** Apply branding config to CSS custom properties on :root and inject custom font if set */
 export function applyBrandingToDom(config: BrandingConfig): void {
   const root = document.documentElement
@@ -33,11 +45,15 @@ export function applyBrandingToDom(config: BrandingConfig): void {
   root.style.setProperty('--color-secondary', config.secondaryColor)
   root.style.setProperty('--color-accent', config.accentColor)
 
+  // Font custom properties — used globally via index.css
+  root.style.setProperty('--font-heading', config.headingFontFamily)
+  const bodyBase64 = config.bodyCustomFontBase64 ?? config.customFontBase64
+  const bodyName = (config.bodyCustomFontBase64 ? config.bodyCustomFontName : config.customFontName) || ''
+  root.style.setProperty('--font-body', bodyBase64 && bodyName ? bodyName : pdfFontToCss(config.bodyFontFamily))
+
   // Inject custom @font-face rules for heading and body fonts
   document.getElementById('joepdf-custom-font')?.remove()
 
-  const bodyBase64 = config.bodyCustomFontBase64 ?? config.customFontBase64
-  const bodyName = (config.bodyCustomFontBase64 ? config.bodyCustomFontName : config.customFontName) || ''
   const headingBase64 = config.headingCustomFontBase64
   const headingName = config.headingCustomFontName || ''
 

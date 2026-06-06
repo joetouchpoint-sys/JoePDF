@@ -28,7 +28,7 @@
   }
 
   body {
-    font-family: 'DM Sans', Inter, system-ui, sans-serif;
+    font-family: var(--font-body, 'DM Sans', Inter, system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
     background-color: #f8fafc;
     color: #292C4F;
@@ -40,7 +40,7 @@
   }
 
   h1, h2, h3 {
-    font-family: 'Nunito', 'VAG Rounded', system-ui, sans-serif;
+    font-family: var(--font-heading, 'Nunito', system-ui, sans-serif);
     font-weight: 700;
   }
 }
@@ -83,7 +83,7 @@
   }
 
   .font-headline {
-    font-family: 'Nunito', 'VAG Rounded', system-ui, sans-serif;
+    font-family: var(--font-heading, 'Nunito', system-ui, sans-serif);
     font-weight: 700;
   }
 }

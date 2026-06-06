@@ -180,7 +180,6 @@ export function Header() {
                 </div>
                 <span
                   className="text-sm font-bold text-white leading-none truncate hidden sm:block"
-                  style={{ fontFamily: branding.headingFontFamily }}
                   title={`${branding.orgName} — ${branding.appName}`}
                 >
                   {branding.appName}
