@@ -1,14 +1,17 @@
 import type { OcrWord } from '@/types/formField'
+import type Tesseract from 'tesseract.js'
 
 // Worker is lazily created and reused across pages
-let workerPromise: Promise<import('tesseract.js').Worker> | null = null
+let workerPromise: Promise<Tesseract.Worker> | null = null
 
-async function getWorker(): Promise<import('tesseract.js').Worker> {
+async function getWorker(): Promise<Tesseract.Worker> {
   if (!workerPromise) {
     workerPromise = (async () => {
       const { createWorker } = await import('tesseract.js')
-      const worker = await createWorker('eng')
-      return worker
+      // Use the self-hosted worker script (copied to public/ by copy-worker npm script)
+      // so the app works without CDN access on internal networks.
+      const workerPath = `${window.location.origin}${import.meta.env.BASE_URL}tesseract-worker.min.js`
+      return createWorker('eng', undefined, { workerPath })
     })()
   }
   return workerPromise
@@ -28,9 +31,10 @@ export async function recognisePage(
   onProgress?: (pct: number) => void,
 ): Promise<OcrWord[]> {
   const worker = await getWorker()
+  onProgress?.(10)
 
   const result = await worker.recognize(imageDataUrl, undefined, {
-    blocks: false,
+    blocks: true,  // words are nested inside blocks
     hocr: false,
     tsv: false,
     text: false,
@@ -40,25 +44,28 @@ export async function recognisePage(
   onProgress?.(100)
 
   const words: OcrWord[] = []
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const word of (result.data as any).words ?? []) {
-    if (!word.text?.trim() || word.confidence < 30) continue
-    const { x0, y0, x1, y1 } = word.bbox as { x0: number; y0: number; x1: number; y1: number }
-    // Convert from rendered-pixel coords to PDF user-space units
-    const pdfX = x0 / renderScale
-    const pdfW = (x1 - x0) / renderScale
-    const pdfH = (y1 - y0) / renderScale
-    // Flip Y: PDF bottom-left origin
-    const pdfY = pageHeightPts - y1 / renderScale
-
-    words.push({
-      text: String(word.text),
-      x: pdfX,
-      y: pdfY,
-      width: pdfW,
-      height: pdfH,
-      confidence: Number(word.confidence),
-    })
+  for (const block of result.data.blocks ?? []) {
+    for (const para of block.paragraphs ?? []) {
+      for (const line of para.lines ?? []) {
+        for (const word of line.words ?? []) {
+          if (!word.text?.trim() || word.confidence < 30) continue
+          const { x0, y0, x1, y1 } = word.bbox
+          const pdfX = x0 / renderScale
+          const pdfW = (x1 - x0) / renderScale
+          const pdfH = (y1 - y0) / renderScale
+          // Flip Y: PDF uses bottom-left origin
+          const pdfY = pageHeightPts - y1 / renderScale
+          words.push({
+            text: String(word.text),
+            x: pdfX,
+            y: pdfY,
+            width: pdfW,
+            height: pdfH,
+            confidence: Number(word.confidence),
+          })
+        }
+      }
+    }
   }
 
   return words

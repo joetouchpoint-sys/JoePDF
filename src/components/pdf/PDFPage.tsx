@@ -93,9 +93,9 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
       const words = await recognisePage(dataUrl, pageH, 2, setOcrProgress)
       setOcrLayer(originalIdx, words)
       if (words.length === 0) {
-        showToast('No text recognised on this page. Try a higher-resolution scan.', 'warning')
+        showToast('No text could be found on this page. The scan quality may be too low.', 'warning')
       } else {
-        showToast(`Recognised ${words.length} words. Switch to "Select text" mode to copy.`, 'success')
+        showToast(`Done — found ${words.length} words. Switch to "Select text" mode to copy.`, 'success')
       }
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'OCR failed.', 'error')
@@ -178,7 +178,7 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
             type="button"
             onClick={handleRunOcr}
             disabled={isOcrRunning}
-            aria-label="Run OCR to extract text from this scanned page"
+            aria-label="Attempt to convert scanned page to selectable text"
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white rounded-md shadow disabled:opacity-70 disabled:pointer-events-none"
             style={{ backgroundColor: 'var(--color-primary)' }}
           >
@@ -188,7 +188,7 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
                 {ocrProgress > 0 ? `${ocrProgress}%` : 'Starting…'}
               </>
             ) : (
-              'Run OCR'
+              'Make text selectable'
             )}
           </button>
         </div>
