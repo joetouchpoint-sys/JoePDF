@@ -199,6 +199,7 @@ export function BrandingConfigPanel() {
         showToast('Invalid JSON file. Please export a valid brand-config.json.', 'error')
       }
     }
+    reader.onerror = () => showToast('Failed to read file.', 'error')
     reader.readAsText(file)
     e.target.value = ''
   }
@@ -213,6 +214,7 @@ export function BrandingConfigPanel() {
       const base64 = (reader.result as string).split(',')[1] ?? ''
       onDone(base64)
     }
+    reader.onerror = () => showToast('Failed to read font file.', 'error')
     reader.readAsDataURL(file)
   }, [])
 

@@ -53,7 +53,7 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
 
     if (rasterised) {
       // Redacted page — replace with PNG image
-      const srcMeta = pageMeta[logicalIdx]
+      const srcMeta = pageMeta[originalIdx]
       const pageW = srcMeta?.width ?? 595
       const pageH = srcMeta?.height ?? 842
 

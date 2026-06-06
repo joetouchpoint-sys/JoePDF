@@ -42,24 +42,28 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 export async function saveDraft(draft: AutosaveDraft): Promise<void> {
+  let db: IDBDatabase | null = null
   try {
-    const db = await openDB()
+    db = await openDB()
     await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite')
+      const tx = db!.transaction(STORE_NAME, 'readwrite')
       tx.objectStore(STORE_NAME).put(draft)
       tx.oncomplete = () => resolve()
       tx.onerror = () => reject(tx.error)
     })
   } catch {
     // Silently fail — autosave is best-effort
+  } finally {
+    db?.close()
   }
 }
 
 export async function loadLatestDraft(): Promise<AutosaveDraft | null> {
+  let db: IDBDatabase | null = null
   try {
-    const db = await openDB()
+    db = await openDB()
     return await new Promise<AutosaveDraft | null>((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly')
+      const tx = db!.transaction(STORE_NAME, 'readonly')
       const req = tx.objectStore(STORE_NAME).getAll()
       req.onsuccess = () => {
         const all = (req.result as AutosaveDraft[])
@@ -71,20 +75,25 @@ export async function loadLatestDraft(): Promise<AutosaveDraft | null> {
     })
   } catch {
     return null
+  } finally {
+    db?.close()
   }
 }
 
 export async function deleteDraft(id: string): Promise<void> {
+  let db: IDBDatabase | null = null
   try {
-    const db = await openDB()
+    db = await openDB()
     await new Promise<void>((resolve) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite')
+      const tx = db!.transaction(STORE_NAME, 'readwrite')
       tx.objectStore(STORE_NAME).delete(id)
       tx.oncomplete = () => resolve()
       tx.onerror = () => resolve() // Ignore delete errors
     })
   } catch {
     // Ignore
+  } finally {
+    db?.close()
   }
 }
 

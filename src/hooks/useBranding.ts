@@ -18,7 +18,7 @@ export function useBranding() {
       applyBrandingToDom(resolved)
       setDrawingDefaults({ fontFamily: resolved.bodyFontFamily })
       try { localStorage.setItem('joepdf_branding', JSON.stringify(resolved)) } catch { /* quota exceeded — ok */ }
-    })
+    }).catch(() => { /* fetch or apply failed — cached/default branding remains */ })
   }, [setBranding, setDrawingDefaults])
 
   // Apply CSS vars whenever branding changes (e.g. admin edits in the panel)

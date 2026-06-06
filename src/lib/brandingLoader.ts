@@ -57,12 +57,13 @@ export function applyBrandingToDom(config: BrandingConfig): void {
   const headingBase64 = config.headingCustomFontBase64
   const headingName = config.headingCustomFontName || ''
 
+  const safeName = (n: string) => n.replace(/"/g, '\\"')
   const faces: string[] = []
   if (bodyBase64 && bodyName) {
-    faces.push(`@font-face { font-family: "${bodyName}"; src: url("data:font/truetype;base64,${bodyBase64}") format("truetype"); font-weight: normal; font-style: normal; font-display: swap; }`)
+    faces.push(`@font-face { font-family: "${safeName(bodyName)}"; src: url("data:font/truetype;base64,${bodyBase64}") format("truetype"); font-weight: normal; font-style: normal; font-display: swap; }`)
   }
   if (headingBase64 && headingName && headingName !== bodyName) {
-    faces.push(`@font-face { font-family: "${headingName}"; src: url("data:font/truetype;base64,${headingBase64}") format("truetype"); font-weight: normal; font-style: normal; font-display: swap; }`)
+    faces.push(`@font-face { font-family: "${safeName(headingName)}"; src: url("data:font/truetype;base64,${headingBase64}") format("truetype"); font-weight: normal; font-style: normal; font-display: swap; }`)
   }
   if (faces.length > 0) {
     const style = document.createElement('style')
