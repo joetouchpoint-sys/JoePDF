@@ -300,6 +300,7 @@ export function BrandingConfigPanel() {
               type="text"
               value={branding.orgName}
               onChange={(e) => setBranding({ orgName: e.target.value })}
+              aria-label="Organisation name"
               className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
@@ -312,6 +313,7 @@ export function BrandingConfigPanel() {
               type="text"
               value={branding.appName}
               onChange={(e) => setBranding({ appName: e.target.value })}
+              aria-label="App name"
               className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
@@ -373,9 +375,9 @@ export function BrandingConfigPanel() {
             )}
           </div>
 
-          <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} />
-          <input ref={headerLogoInputRef} type="file" accept="image/*" className="sr-only" onChange={handleHeaderLogoUpload} />
-          <input ref={faviconInputRef} type="file" accept="image/*" className="sr-only" onChange={handleFaviconUpload} />
+          <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} aria-label="Upload main logo image" />
+          <input ref={headerLogoInputRef} type="file" accept="image/*" className="sr-only" onChange={handleHeaderLogoUpload} aria-label="Upload header bar logo image" />
+          <input ref={faviconInputRef} type="file" accept="image/*" className="sr-only" onChange={handleFaviconUpload} aria-label="Upload favicon image" />
           <p className="text-[11px] text-slate-400">PNG or SVG recommended. Favicon: square image works best (e.g. 64×64 px).</p>
         </div>
 
@@ -406,6 +408,7 @@ export function BrandingConfigPanel() {
             onChange={(e) => setBranding({ uploadDescription: e.target.value })}
             rows={2}
             placeholder="Edit, redact, and manage PDF documents — entirely in your browser."
+            aria-label="Upload page tagline"
             className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none"
           />
         </div>
@@ -421,6 +424,7 @@ export function BrandingConfigPanel() {
             value={branding.reportIssueUrl}
             onChange={(e) => setBranding({ reportIssueUrl: e.target.value })}
             placeholder="https://forms.office.com/… or GitHub Issues URL"
+            aria-label="Report issue / feedback URL"
             className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
           />
           <p className="text-xs text-slate-400 mt-1">Opens in a new tab. Shown in the app footer and on the upload screen.</p>
@@ -438,6 +442,7 @@ export function BrandingConfigPanel() {
               value={branding.footerText}
               onChange={(e) => setBranding({ footerText: e.target.value })}
               placeholder="Optional"
+              aria-label="Footer text"
               className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
@@ -448,6 +453,7 @@ export function BrandingConfigPanel() {
               value={branding.supportEmail}
               onChange={(e) => setBranding({ supportEmail: e.target.value })}
               placeholder="support@example.com"
+              aria-label="Support email"
               className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
             />
           </div>
@@ -462,6 +468,7 @@ export function BrandingConfigPanel() {
           <select
             value={branding.headingFontFamily}
             onChange={(e) => setBranding({ headingFontFamily: e.target.value })}
+            aria-label="Heading font family"
             className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
           >
             <option value="'Nunito', 'VAG Rounded', system-ui, sans-serif">Nunito (default)</option>
@@ -489,6 +496,7 @@ export function BrandingConfigPanel() {
                   value={branding.headingCustomFontName}
                   onChange={(e) => setBranding({ headingCustomFontName: e.target.value })}
                   placeholder="Font name"
+                  aria-label="Heading custom font name"
                   className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-2 py-1 text-xs w-32"
                 />
                 <Button variant="ghost" size="sm" onClick={() => setBranding({ headingCustomFontBase64: null, headingCustomFontName: '' })}>Remove</Button>
@@ -498,7 +506,7 @@ export function BrandingConfigPanel() {
           {branding.headingCustomFontBase64 && (
             <p className="text-[11px] text-slate-400">Font loaded — select &ldquo;{branding.headingCustomFontName} (custom uploaded)&rdquo; in the dropdown above to apply it.</p>
           )}
-          <input ref={headingFontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="sr-only" onChange={handleHeadingFontUpload} />
+          <input ref={headingFontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="sr-only" onChange={handleHeadingFontUpload} aria-label="Upload heading font file" />
         </div>
 
         {/* Body / annotation font */}
@@ -510,6 +518,7 @@ export function BrandingConfigPanel() {
           <select
             value={branding.bodyFontFamily}
             onChange={(e) => setBranding({ bodyFontFamily: e.target.value })}
+            aria-label="Body / annotation font family"
             className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
           >
             <option value="Helvetica">Helvetica (default)</option>
@@ -535,6 +544,7 @@ export function BrandingConfigPanel() {
                   value={branding.bodyCustomFontName || branding.customFontName}
                   onChange={(e) => setBranding({ bodyCustomFontName: e.target.value })}
                   placeholder="Font name"
+                  aria-label="Body custom font name"
                   className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-2 py-1 text-xs w-32"
                 />
                 <Button variant="ghost" size="sm" onClick={() => setBranding({ bodyCustomFontBase64: null, bodyCustomFontName: '', customFontBase64: null })}>Remove</Button>
@@ -544,7 +554,7 @@ export function BrandingConfigPanel() {
           {(branding.bodyCustomFontBase64 ?? branding.customFontBase64) && (
             <p className="text-[11px] text-slate-400">Font loaded — select &ldquo;{branding.bodyCustomFontName || branding.customFontName} (custom uploaded)&rdquo; above. Embedded in exported PDFs.</p>
           )}
-          <input ref={bodyFontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="sr-only" onChange={handleBodyFontUpload} />
+          <input ref={bodyFontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="sr-only" onChange={handleBodyFontUpload} aria-label="Upload body font file" />
           <p className="text-[11px] text-slate-400">Preset fonts use standard PDF fonts (no extra embedding). Custom font is embedded in every exported PDF.</p>
         </div>
 
@@ -613,7 +623,7 @@ export function BrandingConfigPanel() {
             <UploadIcon className="w-3 h-3" />
             Import
           </Button>
-          <input ref={importInputRef} type="file" accept=".json,application/json" className="sr-only" onChange={handleImportConfig} />
+          <input ref={importInputRef} type="file" accept=".json,application/json" className="sr-only" onChange={handleImportConfig} aria-label="Import branding config JSON" />
           <span className="text-[11px] text-slate-400">Save/load configs without pushing to GitHub.</span>
         </div>
 
