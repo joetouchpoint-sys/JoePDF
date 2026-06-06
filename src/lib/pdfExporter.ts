@@ -12,7 +12,7 @@
  */
 
 import { PDFDocument, PDFName, degrees } from 'pdf-lib'
-import type { Annotation } from '@/types/annotation'
+import type { Annotation, FormFieldAnnotation } from '@/types/annotation'
 import type { PageMeta } from '@/types/pdf'
 import { serialiseAnnotations } from './annotationSerializer'
 
@@ -30,6 +30,8 @@ export interface ExportInput {
   fileName: string
   options: ExportOptions
   customFont?: { name: string; bytes: Uint8Array } | null
+  formValues?: Record<string, string | boolean>
+  flattenForms?: boolean
 }
 
 export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
@@ -42,9 +44,42 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
     pageRotations,
     options,
     customFont,
+    formValues,
+    flattenForms,
   } = input
 
   const srcDoc = await PDFDocument.load(originalBytes, { ignoreEncryption: false })
+
+  // Fill AcroForm values into the source document before copying pages
+  if (formValues && Object.keys(formValues).length > 0) {
+    try {
+      const form = srcDoc.getForm()
+      for (const [fieldName, value] of Object.entries(formValues)) {
+        try {
+          const field = form.getFieldMaybe(fieldName)
+          if (!field) continue
+          const fieldType = field.constructor.name
+          if (fieldType === 'PDFTextField' && typeof value === 'string') {
+            ;(field as import('pdf-lib').PDFTextField).setText(value)
+          } else if (fieldType === 'PDFCheckBox') {
+            ;(field as import('pdf-lib').PDFCheckBox)[value ? 'check' : 'uncheck']()
+          } else if (fieldType === 'PDFDropdown' && typeof value === 'string') {
+            ;(field as import('pdf-lib').PDFDropdown).select(value)
+          } else if (fieldType === 'PDFRadioGroup' && typeof value === 'string') {
+            ;(field as import('pdf-lib').PDFRadioGroup).select(value)
+          }
+        } catch {
+          // Best-effort: skip fields that can't be filled
+        }
+      }
+      if (flattenForms) {
+        try { form.flatten() } catch { /* best-effort */ }
+      }
+    } catch {
+      // No form in document — ignore
+    }
+  }
+
   const outDoc = await PDFDocument.create()
 
   for (let logicalIdx = 0; logicalIdx < pageOrder.length; logicalIdx++) {
@@ -88,6 +123,51 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
         const currentRotation = outPage.getRotation().angle
         outPage.setRotation(degrees((currentRotation + rotation) % 360))
       }
+    }
+  }
+
+  // Create AcroForm fields for FormFieldAnnotations
+  const formFieldAnnotations: Array<{ logicalIdx: number; ann: FormFieldAnnotation }> = []
+  for (const [logicalIdx, anns] of annotationsByPage) {
+    for (const ann of anns) {
+      if (ann.type === 'formfield') {
+        formFieldAnnotations.push({ logicalIdx, ann: ann as FormFieldAnnotation })
+      }
+    }
+  }
+  if (formFieldAnnotations.length > 0) {
+    try {
+      const form = outDoc.getForm()
+      for (const { logicalIdx, ann } of formFieldAnnotations) {
+        const outPageIdx = pageOrder.indexOf(pageOrder[logicalIdx] ?? logicalIdx)
+        const outPage = outDoc.getPage(outPageIdx < 0 ? logicalIdx : outPageIdx)
+        const { height: pageH } = outPage.getSize()
+        const scale = 1
+        // Konva top-left → PDF bottom-left coordinate transform
+        const pdfX = ann.x / scale
+        const pdfY = pageH - (ann.y + ann.height) / scale
+        const pdfW = ann.width / scale
+        const pdfH = ann.height / scale
+
+        try {
+          if (ann.fieldType === 'checkbox') {
+            const cb = form.createCheckBox(ann.fieldName)
+            cb.addToPage(outPage, { x: pdfX, y: pdfY, width: pdfW, height: pdfH })
+          } else if (ann.fieldType === 'dropdown' && ann.options.length > 0) {
+            const dd = form.createDropdown(ann.fieldName)
+            dd.addOptions(ann.options)
+            dd.addToPage(outPage, { x: pdfX, y: pdfY, width: pdfW, height: pdfH })
+          } else {
+            const tf = form.createTextField(ann.fieldName)
+            if (ann.placeholder) tf.setText('')
+            tf.addToPage(outPage, { x: pdfX, y: pdfY, width: pdfW, height: pdfH })
+          }
+        } catch {
+          // Field name collision or unsupported — skip silently
+        }
+      }
+    } catch {
+      // Best-effort AcroForm creation
     }
   }
 

@@ -10,6 +10,7 @@ import { CompressDialog } from '@/components/pdf/CompressDialog'
 import { SignatureDialog } from '@/components/pdf/SignatureDialog'
 import { SplitPageDialog } from '@/components/pdf/SplitPageDialog'
 import { MergePDFDialog } from '@/components/pdf/MergePDFDialog'
+import { FormFieldDialog } from '@/components/pdf/FormFieldDialog'
 import { ToastContainer } from '@/components/ui/Toast'
 import { usePDFDocument } from '@/hooks/usePDFDocument'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -123,6 +124,7 @@ export function AppShell() {
       <SignatureDialog />
       <SplitPageDialog />
       <MergePDFDialog />
+      <FormFieldDialog />
       <ToastContainer />
     </BrandingProvider>
   )

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Undo2, Redo2, Download, Settings2, X, FileText, Moon, Sun } from 'lucide-react'
+import { Undo2, Redo2, Download, Settings2, X, FileText, Moon, Sun, Cloud } from 'lucide-react'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ConfirmDialog } from '@/components/ui/Dialog'
 import { useStore, resetAllState } from '@/store'
@@ -28,6 +28,7 @@ export function Header() {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [showRedactConfirm, setShowRedactConfirm] = useState(false)
   const [pendingRedactCount, setPendingRedactCount] = useState(0)
+  const [pendingAction, setPendingAction] = useState<'download' | 'onedrive'>('download')
 
   const handleToggleDark = useCallback(() => {
     const next = !darkMode
@@ -60,7 +61,7 @@ export function Header() {
     return count
   }, [])
 
-  const handleExport = useCallback(async (applyRedactions = false) => {
+  const handleExport = useCallback(async (applyRedactions = false, saveToOneDrive = false) => {
     const store = useStore.getState()
     const { pdf, annotations } = store
     if (!pdf.pdfBytes) return
@@ -106,27 +107,38 @@ export function Header() {
         fileName: freshStore.pdf.fileName ?? 'document.pdf',
         options: { removeMetadata: false },
         customFont,
+        formValues: freshStore.formValues,
       })
 
       const outName = (freshStore.pdf.fileName ?? 'document').replace(/\.pdf$/i, '') + '-edited.pdf'
-      downloadFile(bytes, outName)
+
+      if (saveToOneDrive) {
+        const { uploadToOneDrive } = await import('@/lib/oneDrive')
+        await uploadToOneDrive(freshStore.branding.oneDriveClientId, outName, bytes)
+        showToast('Saved to OneDrive.', 'success')
+      } else {
+        downloadFile(bytes, outName)
+        showToast('PDF downloaded.', 'success')
+      }
+
       setIsDirty(false)
       clearAutosaveDraft()
-      showToast('PDF downloaded.', 'success')
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Export failed.', 'error')
+      const msg = err instanceof Error ? err.message : 'Export failed.'
+      showToast(msg, 'error')
     } finally {
       setIsExporting(false)
     }
   }, [setIsExporting, setIsDirty, setRasterisedPage])
 
-  const handleExportClick = useCallback(() => {
+  const handleExportClick = useCallback((saveToOneDrive = false) => {
     const redactCount = checkForPendingRedactions()
     if (redactCount > 0) {
+      setPendingAction(saveToOneDrive ? 'onedrive' : 'download')
       setPendingRedactCount(redactCount)
       setShowRedactConfirm(true)
     } else {
-      void handleExport()
+      void handleExport(false, saveToOneDrive)
     }
   }, [checkForPendingRedactions, handleExport])
 
@@ -268,10 +280,26 @@ export function Header() {
             </button>
           </Tooltip>
 
+          {hasPDF && branding.oneDriveClientId && (
+            <Tooltip content="Save to OneDrive" side="bottom">
+              <button
+                type="button"
+                onClick={() => handleExportClick(true)}
+                disabled={isExporting}
+                aria-label="Save to OneDrive"
+                className={clsx(
+                  'w-8 h-8 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors',
+                  'disabled:opacity-60 disabled:pointer-events-none',
+                )}
+              >
+                <Cloud className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          )}
           {hasPDF && (
             <button
               type="button"
-              onClick={handleExportClick}
+              onClick={() => handleExportClick(false)}
               disabled={isExporting}
               aria-label="Download PDF"
               className={clsx(
@@ -304,10 +332,10 @@ export function Header() {
       <ConfirmDialog
         open={showRedactConfirm}
         onClose={() => setShowRedactConfirm(false)}
-        onConfirm={() => { setShowRedactConfirm(false); void handleExport(true) }}
+        onConfirm={() => { setShowRedactConfirm(false); void handleExport(true, pendingAction === 'onedrive') }}
         title={`Apply ${pendingRedactCount} pending redaction${pendingRedactCount !== 1 ? 's' : ''}?`}
         message="Redacted pages will be permanently rasterised to images. Text under redaction boxes cannot be recovered. Continue?"
-        confirmLabel="Apply & download"
+        confirmLabel={pendingAction === 'onedrive' ? 'Apply & save to OneDrive' : 'Apply & download'}
         confirmVariant="danger"
       />
     </>

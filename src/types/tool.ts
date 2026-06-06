@@ -10,6 +10,7 @@ export enum Tool {
   REDACT = 'REDACT',
   IMAGE = 'IMAGE',
   STAMP = 'STAMP',
+  FORM_FIELD = 'FORM_FIELD',
 }
 
 export interface ToolInfo {

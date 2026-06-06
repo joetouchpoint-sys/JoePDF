@@ -23,6 +23,7 @@ export interface BrandingConfig {
   customFontName: string
   uploadDescription: string
   reportIssueUrl: string
+  oneDriveClientId: string
 }
 
 export const DEFAULT_BRANDING: BrandingConfig = {
@@ -46,4 +47,5 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   customFontName: 'VAG Rounded',
   uploadDescription: 'Edit, redact, and manage PDF documents — entirely in your browser.',
   reportIssueUrl: '',
+  oneDriveClientId: '',
 }

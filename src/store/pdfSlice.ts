@@ -1,8 +1,12 @@
 import type { StateCreator } from 'zustand'
 import type { PDFState, PageMeta } from '@/types/pdf'
+import type { PDFFormField, OcrWord } from '@/types/formField'
 
 export interface PDFSlice {
   pdf: PDFState
+  formFields: Map<number, PDFFormField[]>
+  formValues: Record<string, string | boolean>
+  ocrLayers: Map<number, OcrWord[]>
   setPdfBytes: (bytes: ArrayBuffer, fileName: string) => void
   setPdfLoading: (loading: boolean) => void
   setPdfError: (error: string | null) => void
@@ -10,6 +14,9 @@ export interface PDFSlice {
   setPageOrder: (order: number[]) => void
   setRasterisedPage: (logicalIndex: number, pngBytes: ArrayBuffer) => void
   clearRasterisedPage: (logicalIndex: number) => void
+  setFormFields: (pageIndex: number, fields: PDFFormField[]) => void
+  setFormValue: (fieldName: string, value: string | boolean) => void
+  setOcrLayer: (pageIndex: number, words: OcrWord[]) => void
   resetPdf: () => void
 }
 
@@ -26,6 +33,9 @@ const initialPdfState: PDFState = {
 
 export const createPdfSlice: StateCreator<PDFSlice> = (set) => ({
   pdf: initialPdfState,
+  formFields: new Map(),
+  formValues: {},
+  ocrLayers: new Map(),
 
   setPdfBytes: (bytes, fileName) =>
     set((state) => ({
@@ -36,6 +46,9 @@ export const createPdfSlice: StateCreator<PDFSlice> = (set) => ({
         loadError: null,
         rasterisedPages: new Map(),
       },
+      formFields: new Map(),
+      formValues: {},
+      ocrLayers: new Map(),
     })),
 
   setPdfLoading: (loading) =>
@@ -73,5 +86,22 @@ export const createPdfSlice: StateCreator<PDFSlice> = (set) => ({
       return { pdf: { ...state.pdf, rasterisedPages: next } }
     }),
 
-  resetPdf: () => set({ pdf: initialPdfState }),
+  setFormFields: (pageIndex, fields) =>
+    set((state) => {
+      const next = new Map(state.formFields)
+      next.set(pageIndex, fields)
+      return { formFields: next }
+    }),
+
+  setFormValue: (fieldName, value) =>
+    set((state) => ({ formValues: { ...state.formValues, [fieldName]: value } })),
+
+  setOcrLayer: (pageIndex, words) =>
+    set((state) => {
+      const next = new Map(state.ocrLayers)
+      next.set(pageIndex, words)
+      return { ocrLayers: next }
+    }),
+
+  resetPdf: () => set({ pdf: initialPdfState, formFields: new Map(), formValues: {}, ocrLayers: new Map() }),
 })

@@ -25,6 +25,28 @@ export interface RedactionResult {
 
 const REDACT_SCALE = 2 // render at 2× for quality
 
+/**
+ * Render a single PDF page to an offscreen canvas and return a PNG data URL.
+ * Used for both redaction rasterisation and OCR input.
+ */
+export async function rasterisePage(
+  doc: PDFDocumentProxy,
+  originalPageNumber: number,
+  scale = 2,
+): Promise<string> {
+  const canvas = await renderPageOffscreen(doc, originalPageNumber, scale)
+  if (canvas instanceof OffscreenCanvas) {
+    const blob = await canvas.convertToBlob({ type: 'image/png' })
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  }
+  return (canvas as HTMLCanvasElement).toDataURL('image/png')
+}
+
 /** Draw redaction boxes on a canvas context. */
 function applyBoxes(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,

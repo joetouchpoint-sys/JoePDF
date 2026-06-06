@@ -8,6 +8,7 @@ export type AnnotationType =
   | 'highlight'
   | 'redact'
   | 'image'
+  | 'formfield'
 
 interface BaseAnnotation {
   id: string
@@ -87,6 +88,14 @@ export interface ImageAnnotation extends BaseAnnotation {
   naturalHeight: number
 }
 
+export interface FormFieldAnnotation extends BaseAnnotation {
+  type: 'formfield'
+  fieldType: 'text' | 'checkbox' | 'dropdown'
+  fieldName: string
+  placeholder: string
+  options: string[]
+}
+
 export type Annotation =
   | TextAnnotation
   | RectAnnotation
@@ -97,6 +106,7 @@ export type Annotation =
   | HighlightAnnotation
   | RedactAnnotation
   | ImageAnnotation
+  | FormFieldAnnotation
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnnotationUpdate = Record<string, any>

@@ -1,9 +1,13 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import type { PDFDocumentProxy, PDFPageProxy } from '@/lib/pdfRenderer'
 import { renderPageToCanvas } from '@/lib/pdfRenderer'
+import { rasterisePage } from '@/lib/redactionEngine'
 import { AnnotationLayer } from '@/components/canvas/AnnotationLayer'
 import { PDFTextLayer } from './PDFTextLayer'
+import { FormFieldOverlay } from './FormFieldOverlay'
+import { OcrTextLayer } from './OcrTextLayer'
 import { useStore } from '@/store'
+import { showToast } from '@/components/ui/Toast'
 
 interface PDFPageProps {
   doc: PDFDocumentProxy
@@ -20,8 +24,17 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
   const [pageProxy, setPageProxy] = useState<PDFPageProxy | null>(null)
   const [isRendering, setIsRendering] = useState(true)
   const [hasBeenVisible, setHasBeenVisible] = useState(false)
+  const [hasNativeText, setHasNativeText] = useState(true)
+  const [isOcrRunning, setIsOcrRunning] = useState(false)
+  const [ocrProgress, setOcrProgress] = useState(0)
   const rotation = useStore((s) => s.ui.pageRotations.get(pageIndex) ?? 0)
   const textSelectMode = useStore((s) => s.ui.textSelectMode)
+  const pageOrder = useStore((s) => s.pdf.pageOrder)
+  const pageMeta = useStore((s) => s.pdf.pageMeta)
+  const ocrLayers = useStore((s) => s.ocrLayers)
+  const setOcrLayer = useStore((s) => s.setOcrLayer)
+  const originalIdx = pageOrder[pageIndex] ?? pageIndex
+  const hasOcrLayer = !!ocrLayers.get(originalIdx)
 
   // Only render once the page scrolls near the viewport — prevents iOS canvas memory exhaustion
   useEffect(() => {
@@ -60,6 +73,36 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
 
     return () => handle.cancel()
   }, [doc, pageNumber, scale, hasBeenVisible])
+
+  // Check if the page has native selectable text after the proxy is ready
+  useEffect(() => {
+    if (!pageProxy) return
+    pageProxy.getTextContent().then((tc) => {
+      setHasNativeText(tc.items.length > 0)
+    }).catch(() => {})
+  }, [pageProxy])
+
+  const handleRunOcr = useCallback(async () => {
+    if (isOcrRunning) return
+    setIsOcrRunning(true)
+    setOcrProgress(0)
+    try {
+      const { recognisePage } = await import('@/lib/ocr')
+      const dataUrl = await rasterisePage(doc, pageNumber, 2)
+      const pageH = pageMeta[originalIdx]?.height ?? 842
+      const words = await recognisePage(dataUrl, pageH, 2, setOcrProgress)
+      setOcrLayer(originalIdx, words)
+      if (words.length === 0) {
+        showToast('No text recognised on this page. Try a higher-resolution scan.', 'warning')
+      } else {
+        showToast(`Recognised ${words.length} words. Switch to "Select text" mode to copy.`, 'success')
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'OCR failed.', 'error')
+    } finally {
+      setIsOcrRunning(false)
+    }
+  }, [doc, pageNumber, originalIdx, pageMeta, setOcrLayer, isOcrRunning])
 
   // A4 proportions as placeholder while not yet visible / rendering
   const placeholderW = Math.floor(595 * scale)
@@ -115,7 +158,40 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
               interactive={textSelectMode}
             />
           )}
+
+          <FormFieldOverlay
+            pageIndex={pageIndex}
+            scale={scale}
+          />
+
+          <OcrTextLayer
+            pageIndex={pageIndex}
+            scale={scale}
+          />
         </>
+      )}
+
+      {/* OCR button — shown on scanned pages with no native or OCR text */}
+      {!isRendering && !hasNativeText && !hasOcrLayer && (
+        <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 20 }}>
+          <button
+            type="button"
+            onClick={handleRunOcr}
+            disabled={isOcrRunning}
+            aria-label="Run OCR to extract text from this scanned page"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white rounded-md shadow disabled:opacity-70 disabled:pointer-events-none"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          >
+            {isOcrRunning ? (
+              <>
+                <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                {ocrProgress > 0 ? `${ocrProgress}%` : 'Starting…'}
+              </>
+            ) : (
+              'Run OCR'
+            )}
+          </button>
+        </div>
       )}
 
       {isActive && (

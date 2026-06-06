@@ -77,7 +77,7 @@ export async function serialiseAnnotations(
   }
 
   for (const ann of annotations) {
-    if (!ann.visible || ann.type === 'redact') continue
+    if (!ann.visible || ann.type === 'redact' || ann.type === 'formfield') continue
 
     const x = ann.x / scale
     const width = ann.width / scale

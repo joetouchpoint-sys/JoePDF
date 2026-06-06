@@ -46,6 +46,7 @@ export interface UISlice {
     pendingStamp: PendingStamp | null
     lastSignature: PendingStamp | null
     darkMode: boolean
+    pendingFormField: { pageIndex: number; x: number; y: number; width: number; height: number } | null
   }
   setActiveTool: (tool: Tool) => void
   setZoom: (zoom: number) => void
@@ -69,6 +70,7 @@ export interface UISlice {
   setPendingStamp: (stamp: PendingStamp | null) => void
   setLastSignature: (stamp: PendingStamp | null) => void
   setDarkMode: (dark: boolean) => void
+  setPendingFormField: (data: { pageIndex: number; x: number; y: number; width: number; height: number } | null) => void
   resetUI: () => void
 }
 
@@ -108,6 +110,7 @@ const initialUI = {
   pendingStamp: null as PendingStamp | null,
   lastSignature: null as PendingStamp | null,
   darkMode: false,
+  pendingFormField: null as { pageIndex: number; x: number; y: number; width: number; height: number } | null,
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
@@ -154,5 +157,6 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setPendingStamp: (stamp) => set((s) => ({ ui: { ...s.ui, pendingStamp: stamp } })),
   setLastSignature: (stamp) => set((s) => ({ ui: { ...s.ui, lastSignature: stamp } })),
   setDarkMode: (dark) => set((s) => ({ ui: { ...s.ui, darkMode: dark } })),
+  setPendingFormField: (data) => set((s) => ({ ui: { ...s.ui, pendingFormField: data } })),
   resetUI: () => set({ ui: initialUI }),
 })

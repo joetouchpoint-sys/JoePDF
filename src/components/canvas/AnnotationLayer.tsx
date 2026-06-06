@@ -13,7 +13,7 @@ import { ResizeAnnotationCommand } from '@/commands/ResizeAnnotationCommand'
 import type {
   Annotation, TextAnnotation, RectAnnotation, EllipseAnnotation,
   LineAnnotation, ArrowAnnotation, FreehandAnnotation, HighlightAnnotation,
-  RedactAnnotation, ImageAnnotation,
+  RedactAnnotation, ImageAnnotation, FormFieldAnnotation,
 } from '@/types/annotation'
 import { TextAnnotationShape } from './TextAnnotation'
 import { ShapeAnnotationShape } from './ShapeAnnotation'
@@ -21,6 +21,7 @@ import { FreehandAnnotationShape } from './FreehandAnnotation'
 import { HighlightAnnotationShape } from './HighlightAnnotation'
 import { RedactionBoxShape } from './RedactionBox'
 import { ImageAnnotationShape } from './ImageAnnotation'
+import { FormFieldAnnotationShape } from './FormFieldAnnotation'
 import { importImage } from '@/lib/imageImporter'
 import { showToast } from '@/components/ui/Toast'
 import type { DrawingDefaults } from '@/store/uiSlice'
@@ -180,6 +181,25 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     isDrawingRef.current = false
     const id = activeDrawingId.current
     activeDrawingId.current = null
+
+    if (activeTool === Tool.FORM_FIELD) {
+      const ann = useStore.getState().annotations.get(pageIndex)?.find((a) => a.id === id)
+      if (ann && ann.width >= 8 && ann.height >= 8) {
+        // Remove the temp rect and open the dialog instead
+        useStore.getState().removeAnnotation(pageIndex, ann.id)
+        useStore.getState().setPendingFormField({
+          pageIndex,
+          x: ann.x,
+          y: ann.y,
+          width: ann.width,
+          height: ann.height,
+        })
+      } else if (id) {
+        useStore.getState().removeAnnotation(pageIndex, id)
+      }
+      setActiveTool(Tool.SELECT)
+      return
+    }
 
     if (id) {
       const ann = useStore.getState().annotations.get(pageIndex)?.find((a) => a.id === id)
@@ -341,6 +361,16 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
                   onResizeEnd={onResizeEnd}
                 />
               )
+            case 'formfield':
+              return (
+                <FormFieldAnnotationShape
+                  key={ann.id}
+                  annotation={ann as FormFieldAnnotation}
+                  isSelected={isSelected}
+                  onSelect={onSelect}
+                  onDragEnd={onDragEnd}
+                />
+              )
             default:
               return null
           }
@@ -354,6 +384,7 @@ function getCursor(tool: Tool): string {
   switch (tool) {
     case Tool.TEXT: return 'text'
     case Tool.STAMP: return 'copy'
+    case Tool.FORM_FIELD:
     case Tool.REDACT:
     case Tool.RECT:
     case Tool.ELLIPSE:
@@ -389,6 +420,9 @@ function buildAnnotation(
       return { ...base, type: 'highlight', fillColor: d.highlightColor, opacity: 0.45 }
     case Tool.REDACT:
       return { ...base, type: 'redact', applied: false }
+    case Tool.FORM_FIELD:
+      // Temporary placeholder rect used for drag feedback — removed when dialog opens
+      return { ...base, type: 'rect', fillColor: 'rgba(219,234,254,0.2)', strokeColor: '#60a5fa', strokeWidth: 1, cornerRadius: 2 }
     default:
       return null
   }

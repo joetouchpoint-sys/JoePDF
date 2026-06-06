@@ -2,7 +2,7 @@ import {
   MousePointer2, Type, Square, Circle, Minus, ArrowRight,
   Pencil, Highlighter, Image as ImageIcon, EraserIcon,
   ChevronRight, ChevronLeft, MousePointerClick, LayoutGrid,
-  FileArchive, PenLine, Scissors, Layers,
+  FileArchive, PenLine, Scissors, Layers, FormInput,
 } from 'lucide-react'
 import { Tool } from '@/types/tool'
 import { ToolButton } from './ToolButton'
@@ -54,6 +54,12 @@ const toolGroups: ToolGroupDef[] = [
     label: 'Redact',
     tools: [
       { tool: Tool.REDACT, label: 'Redact', shortcut: 'X', icon: <EraserIcon className="w-4 h-4" /> },
+    ],
+  },
+  {
+    label: 'Forms',
+    tools: [
+      { tool: Tool.FORM_FIELD, label: 'Form field', shortcut: '', icon: <FormInput className="w-4 h-4" /> },
     ],
   },
 ]

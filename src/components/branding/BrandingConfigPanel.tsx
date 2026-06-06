@@ -432,6 +432,23 @@ export function BrandingConfigPanel() {
           <p className="text-xs text-slate-400 mt-1">Opens in a new tab. Shown in the app footer and on the upload screen.</p>
         </div>
 
+        {/* OneDrive integration */}
+        <div>
+          <label className="text-xs font-medium text-slate-600 block mb-1">
+            OneDrive App Client ID
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(leave blank to hide the OneDrive save button)</span>
+          </label>
+          <input
+            type="text"
+            value={branding.oneDriveClientId}
+            onChange={(e) => setBranding({ oneDriveClientId: e.target.value })}
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            aria-label="OneDrive App Client ID"
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+          />
+          <p className="text-xs text-slate-400 mt-1">Azure AD app registration client ID with Files.ReadWrite permission.</p>
+        </div>
+
         {/* Footer / support */}
         <div className="grid grid-cols-2 gap-3">
           <div>
