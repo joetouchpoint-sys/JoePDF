@@ -7,8 +7,11 @@ import { showToast } from '@/components/ui/Toast'
 import { AdminLogin, ChangeCredsForm } from '@/components/ui/AdminLogin'
 import { isAdminSession, setAdminSession } from '@/lib/adminAuth'
 import { commitBrandingConfig, loadGitHubSettings, saveGitHubSettings, verifyToken } from '@/lib/githubConfig'
+import { downloadBrandingConfig } from '@/lib/brandingLoader'
 import type { GitHubSettings } from '@/lib/githubConfig'
-import { LogOut, ShieldCheck, Save, Github, CheckCircle2, Eye, EyeOff, ExternalLink } from 'lucide-react'
+import type { BrandingConfig } from '@/types/branding'
+import { DEFAULT_BRANDING } from '@/types/branding'
+import { LogOut, ShieldCheck, Save, Github, CheckCircle2, Eye, EyeOff, ExternalLink, Download, Upload as UploadIcon } from 'lucide-react'
 import { clsx } from 'clsx'
 
 // ── GitHub token setup sub-panel ─────────────────────────────────────────────
@@ -138,7 +141,10 @@ export function BrandingConfigPanel() {
   const setBranding = useStore((s) => s.setBranding)
   const resetBranding = useStore((s) => s.resetBranding)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const headerLogoInputRef = useRef<HTMLInputElement>(null)
+  const faviconInputRef = useRef<HTMLInputElement>(null)
   const fontInputRef = useRef<HTMLInputElement>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   const [authed, setAuthed] = useState(() => isAdminSession())
   const [showChangeCreds, setShowChangeCreds] = useState(false)
@@ -146,13 +152,53 @@ export function BrandingConfigPanel() {
   const [showGhSetup, setShowGhSetup] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const readImageFile = (file: File, onDone: (dataUrl: string) => void) => {
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return }
+    const reader = new FileReader()
+    reader.onload = () => onDone(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return }
+    readImageFile(file, (dataUrl) => setBranding({ logoDataUrl: dataUrl }))
+    e.target.value = ''
+  }
+
+  const handleHeaderLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    readImageFile(file, (dataUrl) => setBranding({ headerLogoDataUrl: dataUrl }))
+    e.target.value = ''
+  }
+
+  const handleFaviconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    readImageFile(file, (dataUrl) => setBranding({ faviconDataUrl: dataUrl }))
+    e.target.value = ''
+  }
+
+  const handleExportConfig = () => {
+    downloadBrandingConfig(branding)
+    showToast('Config exported as brand-config.json', 'success')
+  }
+
+  const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
     const reader = new FileReader()
-    reader.onload = () => setBranding({ logoDataUrl: reader.result as string })
-    reader.readAsDataURL(file)
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result as string) as Partial<BrandingConfig>
+        setBranding({ ...DEFAULT_BRANDING, ...parsed })
+        showToast('Config imported successfully.', 'success')
+      } catch {
+        showToast('Invalid JSON file. Please export a valid brand-config.json.', 'error')
+      }
+    }
+    reader.readAsText(file)
     e.target.value = ''
   }
 
@@ -254,24 +300,66 @@ export function BrandingConfigPanel() {
           </div>
         </div>
 
-        {/* Logo */}
-        <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Logo</label>
-          <div className="flex items-center gap-2">
+        {/* Icons — three separate controls */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium text-slate-600">Icons &amp; logos</label>
+          <p className="text-[11px] text-slate-400 -mt-1">Set each separately, or leave Header/Favicon blank to reuse the main logo.</p>
+
+          {/* Upload screen logo */}
+          <div className="flex items-center gap-2 py-1.5 border-b border-slate-100 dark:border-slate-700">
+            <span className="text-xs text-slate-500 w-28 flex-shrink-0">Upload screen</span>
             {branding.logoDataUrl && (
-              <img src={branding.logoDataUrl} alt="Logo" className="h-8 w-auto rounded" />
+              <img src={branding.logoDataUrl} alt="Logo" className="h-7 w-auto rounded border border-slate-100" />
             )}
             <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
-              Upload logo
+              {branding.logoDataUrl ? 'Change' : 'Upload'}
             </Button>
             {branding.logoDataUrl && (
-              <Button variant="ghost" size="sm" onClick={() => setBranding({ logoDataUrl: null })}>
-                Remove
+              <Button variant="ghost" size="sm" onClick={() => setBranding({ logoDataUrl: null })}>Remove</Button>
+            )}
+          </div>
+
+          {/* Header bar logo */}
+          <div className="flex items-center gap-2 py-1.5 border-b border-slate-100 dark:border-slate-700">
+            <span className="text-xs text-slate-500 w-28 flex-shrink-0">Header bar</span>
+            {(branding.headerLogoDataUrl ?? branding.logoDataUrl) && (
+              <img src={branding.headerLogoDataUrl ?? branding.logoDataUrl!} alt="Header logo" className="h-7 w-auto rounded border border-slate-100" />
+            )}
+            <Button variant="secondary" size="sm" onClick={() => headerLogoInputRef.current?.click()}>
+              {branding.headerLogoDataUrl ? 'Change' : 'Upload'}
+            </Button>
+            {branding.headerLogoDataUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setBranding({ headerLogoDataUrl: null })}>
+                {branding.logoDataUrl ? 'Use main logo' : 'Remove'}
               </Button>
             )}
           </div>
+
+          {/* Favicon */}
+          <div className="flex items-center gap-2 py-1.5">
+            <span className="text-xs text-slate-500 w-28 flex-shrink-0">Favicon</span>
+            {branding.faviconDataUrl && (
+              <img src={branding.faviconDataUrl} alt="Favicon" className="h-7 w-7 rounded border border-slate-100 object-contain" />
+            )}
+            <Button variant="secondary" size="sm" onClick={() => faviconInputRef.current?.click()}>
+              {branding.faviconDataUrl ? 'Change' : 'Upload'}
+            </Button>
+            {branding.faviconDataUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setBranding({ faviconDataUrl: null })}>
+                {branding.logoDataUrl ? 'Auto from logo' : 'Remove'}
+              </Button>
+            )}
+            {!branding.faviconDataUrl && (
+              <span className="text-[11px] text-slate-400">
+                {branding.logoDataUrl ? 'Auto-generated from main logo' : 'Default favicon'}
+              </span>
+            )}
+          </div>
+
           <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} />
-          <p className="text-xs text-slate-400 mt-1">PNG or SVG — max 200×60 px recommended</p>
+          <input ref={headerLogoInputRef} type="file" accept="image/*" className="sr-only" onChange={handleHeaderLogoUpload} />
+          <input ref={faviconInputRef} type="file" accept="image/*" className="sr-only" onChange={handleFaviconUpload} />
+          <p className="text-[11px] text-slate-400">PNG or SVG recommended. Favicon: square image works best (e.g. 64×64 px).</p>
         </div>
 
         {/* Colours */}
@@ -444,8 +532,23 @@ export function BrandingConfigPanel() {
           <ChangeCredsForm onDone={() => setShowChangeCreds(false)} />
         )}
 
+        {/* Export / Import config */}
+        <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+          <span className="text-xs text-slate-400 flex-shrink-0">Local config:</span>
+          <Button variant="secondary" size="sm" onClick={handleExportConfig}>
+            <Download className="w-3 h-3" />
+            Export
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => importInputRef.current?.click()}>
+            <UploadIcon className="w-3 h-3" />
+            Import
+          </Button>
+          <input ref={importInputRef} type="file" accept=".json,application/json" className="sr-only" onChange={handleImportConfig} />
+          <span className="text-[11px] text-slate-400">Save/load configs without pushing to GitHub.</span>
+        </div>
+
         {/* Action buttons */}
-        <div className="flex justify-between pt-2 border-t border-slate-100">
+        <div className="flex justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
           <Button
             variant="ghost"
             size="sm"

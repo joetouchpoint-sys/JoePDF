@@ -1,7 +1,9 @@
 export interface BrandingConfig {
   orgName: string
   appName: string
-  logoDataUrl: string | null
+  logoDataUrl: string | null        // upload screen logo
+  headerLogoDataUrl: string | null  // header bar logo (falls back to logoDataUrl)
+  faviconDataUrl: string | null     // browser tab / bookmark favicon (falls back to auto-generate from logo)
   primaryColor: string
   secondaryColor: string
   accentColor: string
@@ -18,6 +20,8 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   orgName: 'Family Action',
   appName: 'JoePDF',
   logoDataUrl: null,
+  headerLogoDataUrl: null,
+  faviconDataUrl: null,
   primaryColor: '#178351',   // Family Action Green
   secondaryColor: '#292C4F', // Navy Blue
   accentColor: '#A0DA00',    // Lime Green

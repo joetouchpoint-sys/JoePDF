@@ -68,7 +68,7 @@ export function DropZone() {
       onClick={() => inputRef.current?.click()}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click() }}
       className={clsx(
-        'w-full max-w-lg border-2 border-dashed rounded-2xl px-8 py-14 flex flex-col items-center gap-4',
+        'w-full max-w-lg border-2 border-dashed rounded-2xl px-8 py-8 flex flex-col items-center gap-3',
         'cursor-pointer transition-all duration-200 outline-none',
         'focus-visible:ring-2 focus-visible:ring-[--color-primary] focus-visible:ring-offset-2',
         isDragOver
@@ -92,7 +92,7 @@ export function DropZone() {
           {isDragOver ? 'Release to open' : 'Drop a PDF here'}
         </p>
         <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-          or <span className="text-[--color-primary] font-medium">browse to upload</span>
+          or <span className="text-[--color-primary] font-medium">browse to open</span>
         </p>
       </div>
 

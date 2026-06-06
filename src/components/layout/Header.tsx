@@ -166,8 +166,8 @@ export function Header() {
                 : 'cursor-default',
             )}
           >
-            {branding.logoDataUrl ? (
-              <img src={branding.logoDataUrl} alt={branding.orgName} className="h-7 w-auto max-w-[120px] object-contain" />
+            {(branding.headerLogoDataUrl ?? branding.logoDataUrl) ? (
+              <img src={branding.headerLogoDataUrl ?? branding.logoDataUrl!} alt={branding.orgName} className="h-7 w-auto max-w-[120px] object-contain" />
             ) : (
               <>
                 <div
@@ -206,28 +206,28 @@ export function Header() {
 
             {/* Undo / Redo */}
             <div className="flex items-center gap-0.5">
-              <Tooltip content="Undo" shortcut="Ctrl+Z" side="bottom">
-                <button
-                  type="button"
-                  onClick={undo}
-                  disabled={!canUndo}
-                  aria-label="Undo"
-                  className="w-8 h-8 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                >
-                  <Undo2 className="w-4 h-4" />
-                </button>
-              </Tooltip>
-              <Tooltip content="Redo" shortcut="Ctrl+Y" side="bottom">
-                <button
-                  type="button"
-                  onClick={redo}
-                  disabled={!canRedo}
-                  aria-label="Redo"
-                  className="w-8 h-8 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                >
-                  <Redo2 className="w-4 h-4" />
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                onClick={undo}
+                disabled={!canUndo}
+                aria-label="Undo (Ctrl+Z)"
+                title="Undo (Ctrl+Z)"
+                className="flex items-center gap-1 px-2 h-8 rounded text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <Undo2 className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="text-xs font-medium hidden sm:block">Undo</span>
+              </button>
+              <button
+                type="button"
+                onClick={redo}
+                disabled={!canRedo}
+                aria-label="Redo (Ctrl+Y)"
+                title="Redo (Ctrl+Y)"
+                className="flex items-center gap-1 px-2 h-8 rounded text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <Redo2 className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="text-xs font-medium hidden sm:block">Redo</span>
+              </button>
             </div>
 
             <div className="w-px h-5 bg-white/20 flex-shrink-0" />
