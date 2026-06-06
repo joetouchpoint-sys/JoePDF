@@ -28,7 +28,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
   const [ghostPos, setGhostPos] = useState<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
-    if (activeTool !== Tool.STAMP) { setGhostPos(null); return }
+    if (activeTool !== Tool.STAMP) return
     const onMove = (e: MouseEvent) => setGhostPos({ x: e.clientX, y: e.clientY })
     const onLeave = () => setGhostPos(null)
     window.addEventListener('mousemove', onMove)
@@ -36,6 +36,7 @@ export function PDFViewer({ doc }: PDFViewerProps) {
     return () => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseleave', onLeave)
+      setGhostPos(null)
     }
   }, [activeTool])
 

@@ -142,7 +142,7 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       const ann = buildAnnotation(activeTool, id, pageIndex, pos.x, pos.y, drawingDefaults)
       if (ann) dispatch(new AddAnnotationCommand(pageIndex, ann))
     },
-    [activeTool, pageIndex, dispatch, getPos, setSelectedId, setActiveTool, setNewlyCreatedId, drawingDefaults],
+    [activeTool, pageIndex, dispatch, getPos, setSelectedId, setActiveTool, setNewlyCreatedId, drawingDefaults, zoom],
   )
 
   const handleMouseMove = useCallback(
