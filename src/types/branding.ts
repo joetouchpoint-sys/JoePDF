@@ -10,9 +10,18 @@ export interface BrandingConfig {
   footerText: string
   supportEmail: string
   privacyNotice: string
-  customFontBase64: string | null
-  customFontName: string
+  // Heading font (UI — app name, org name in header bar and upload screen)
   headingFontFamily: string
+  headingCustomFontBase64: string | null
+  headingCustomFontName: string
+  // Body font (text annotations added to PDFs)
+  bodyFontFamily: string
+  bodyCustomFontBase64: string | null  // renamed concept from customFontBase64
+  bodyCustomFontName: string           // renamed concept from customFontName
+  /** @deprecated use bodyCustomFontBase64 */
+  customFontBase64: string | null
+  /** @deprecated use bodyCustomFontName */
+  customFontName: string
   uploadDescription: string
   reportIssueUrl: string
 }
@@ -29,9 +38,14 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   footerText: '',
   supportEmail: '',
   privacyNotice: '',
+  headingFontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif",
+  headingCustomFontBase64: null,
+  headingCustomFontName: '',
+  bodyFontFamily: 'Helvetica',
+  bodyCustomFontBase64: null,
+  bodyCustomFontName: '',
   customFontBase64: null,
   customFontName: 'VAG Rounded',
-  headingFontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif",
   uploadDescription: 'Edit, redact, and manage PDF documents — entirely in your browser.',
   reportIssueUrl: '',
 }

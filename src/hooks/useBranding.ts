@@ -6,6 +6,7 @@ import { DEFAULT_BRANDING } from '@/types/branding'
 export function useBranding() {
   const branding = useStore((s) => s.branding)
   const setBranding = useStore((s) => s.setBranding)
+  const setDrawingDefaults = useStore((s) => s.setDrawingDefaults)
 
   // On mount: load branding from the deployed brand-config.json (same for all devices).
   // Falls back to DEFAULT_BRANDING if the file isn't present or the fetch fails.
@@ -15,14 +16,16 @@ export function useBranding() {
       const resolved = config ?? DEFAULT_BRANDING
       setBranding(resolved)
       applyBrandingToDom(resolved)
+      setDrawingDefaults({ fontFamily: resolved.bodyFontFamily })
       try { localStorage.setItem('joepdf_branding', JSON.stringify(resolved)) } catch { /* quota exceeded — ok */ }
     })
-  }, [setBranding])
+  }, [setBranding, setDrawingDefaults])
 
   // Apply CSS vars whenever branding changes (e.g. admin edits in the panel)
   useEffect(() => {
     applyBrandingToDom(branding)
-  }, [branding])
+    setDrawingDefaults({ fontFamily: branding.bodyFontFamily })
+  }, [branding, setDrawingDefaults])
 
   return { branding, setBranding }
 }

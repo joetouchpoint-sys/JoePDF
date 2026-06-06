@@ -33,22 +33,25 @@ export function applyBrandingToDom(config: BrandingConfig): void {
   root.style.setProperty('--color-secondary', config.secondaryColor)
   root.style.setProperty('--color-accent', config.accentColor)
 
-  // Inject custom font @font-face when a font file has been uploaded
-  const existingStyle = document.getElementById('joepdf-custom-font')
-  if (existingStyle) existingStyle.remove()
+  // Inject custom @font-face rules for heading and body fonts
+  document.getElementById('joepdf-custom-font')?.remove()
 
-  if (config.customFontBase64 && config.customFontName) {
+  const bodyBase64 = config.bodyCustomFontBase64 ?? config.customFontBase64
+  const bodyName = (config.bodyCustomFontBase64 ? config.bodyCustomFontName : config.customFontName) || ''
+  const headingBase64 = config.headingCustomFontBase64
+  const headingName = config.headingCustomFontName || ''
+
+  const faces: string[] = []
+  if (bodyBase64 && bodyName) {
+    faces.push(`@font-face { font-family: "${bodyName}"; src: url("data:font/truetype;base64,${bodyBase64}") format("truetype"); font-weight: normal; font-style: normal; font-display: swap; }`)
+  }
+  if (headingBase64 && headingName && headingName !== bodyName) {
+    faces.push(`@font-face { font-family: "${headingName}"; src: url("data:font/truetype;base64,${headingBase64}") format("truetype"); font-weight: normal; font-style: normal; font-display: swap; }`)
+  }
+  if (faces.length > 0) {
     const style = document.createElement('style')
     style.id = 'joepdf-custom-font'
-    style.textContent = `
-      @font-face {
-        font-family: "${config.customFontName}";
-        src: url("data:font/truetype;base64,${config.customFontBase64}") format("truetype");
-        font-weight: normal;
-        font-style: normal;
-        font-display: swap;
-      }
-    `
+    style.textContent = faces.join('\n')
     document.head.appendChild(style)
   }
 }

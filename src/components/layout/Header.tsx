@@ -87,10 +87,12 @@ export function Header() {
       for (const [k, v] of freshStore.annotations) annotsByPage.set(k, v as Annotation[])
 
       const brandingState = freshStore.branding
-      const customFont = brandingState.customFontBase64 && brandingState.customFontName
+      const bodyFontBase64 = brandingState.bodyCustomFontBase64 ?? brandingState.customFontBase64
+      const bodyFontName = (brandingState.bodyCustomFontBase64 ? brandingState.bodyCustomFontName : brandingState.customFontName) || ''
+      const customFont = bodyFontBase64 && bodyFontName
         ? {
-          name: brandingState.customFontName,
-          bytes: Uint8Array.from(atob(brandingState.customFontBase64), (c) => c.charCodeAt(0)),
+          name: bodyFontName,
+          bytes: Uint8Array.from(atob(bodyFontBase64), (c) => c.charCodeAt(0)),
         }
         : null
 

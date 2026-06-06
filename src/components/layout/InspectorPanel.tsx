@@ -60,8 +60,8 @@ function TextAnnotationControls({
     { value: 'Arial', label: 'Arial' },
     { value: 'Georgia', label: 'Georgia' },
     { value: 'Verdana', label: 'Verdana' },
-    ...(branding.customFontBase64 && branding.customFontName
-      ? [{ value: branding.customFontName, label: `${branding.customFontName} (brand)` }]
+    ...((branding.bodyCustomFontBase64 ?? branding.customFontBase64) && (branding.bodyCustomFontName || branding.customFontName)
+      ? [{ value: branding.bodyCustomFontName || branding.customFontName, label: `${branding.bodyCustomFontName || branding.customFontName} (brand)` }]
       : []),
   ]
 

@@ -143,7 +143,8 @@ export function BrandingConfigPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const headerLogoInputRef = useRef<HTMLInputElement>(null)
   const faviconInputRef = useRef<HTMLInputElement>(null)
-  const fontInputRef = useRef<HTMLInputElement>(null)
+  const headingFontInputRef = useRef<HTMLInputElement>(null)
+  const bodyFontInputRef = useRef<HTMLInputElement>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   const [authed, setAuthed] = useState(() => isAdminSession())
@@ -202,24 +203,40 @@ export function BrandingConfigPanel() {
     e.target.value = ''
   }
 
-  const handleFontUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const readFontFile = useCallback((file: File, onDone: (base64: string) => void) => {
     if (!file.name.match(/\.(ttf|otf|woff|woff2)$/i)) {
       showToast('Please select a font file (.ttf, .otf, .woff, .woff2).', 'error')
       return
     }
     const reader = new FileReader()
     reader.onload = () => {
-      const result = reader.result as string
-      // Strip the data URL prefix to store only the base64 part
-      const base64 = result.split(',')[1] ?? ''
-      setBranding({ customFontBase64: base64 })
-      showToast(`Font "${file.name}" uploaded. Save to apply sitewide.`, 'success')
+      const base64 = (reader.result as string).split(',')[1] ?? ''
+      onDone(base64)
     }
     reader.readAsDataURL(file)
+  }, [])
+
+  const handleHeadingFontUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const name = file.name.replace(/\.[^.]+$/, '')
+    readFontFile(file, (base64) => {
+      setBranding({ headingCustomFontBase64: base64, headingCustomFontName: name })
+      showToast(`Heading font "${name}" uploaded.`, 'success')
+    })
     e.target.value = ''
-  }, [setBranding])
+  }, [setBranding, readFontFile])
+
+  const handleBodyFontUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const name = file.name.replace(/\.[^.]+$/, '')
+    readFontFile(file, (base64) => {
+      setBranding({ bodyCustomFontBase64: base64, bodyCustomFontName: name })
+      showToast(`Body font "${name}" uploaded.`, 'success')
+    })
+    e.target.value = ''
+  }, [setBranding, readFontFile])
 
   const handleSave = async () => {
     if (!ghSettings) {
@@ -437,10 +454,10 @@ export function BrandingConfigPanel() {
         </div>
 
         {/* Heading font */}
-        <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
             Heading font
-            <span className="text-[10px] text-slate-400 font-normal ml-1">(app name &amp; org name)</span>
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(app name &amp; org name in header &amp; home screen)</span>
           </label>
           <select
             value={branding.headingFontFamily}
@@ -455,54 +472,80 @@ export function BrandingConfigPanel() {
             <option value="'Verdana', sans-serif">Verdana</option>
             <option value="'Times New Roman', serif">Times New Roman</option>
             <option value="'Courier New', monospace">Courier New</option>
-            {branding.customFontBase64 && branding.customFontName && (
-              <option value={`'${branding.customFontName}', system-ui, sans-serif`}>
-                {branding.customFontName} (brand font)
+            {branding.headingCustomFontBase64 && branding.headingCustomFontName && (
+              <option value={`'${branding.headingCustomFontName}', system-ui, sans-serif`}>
+                {branding.headingCustomFontName} (custom uploaded)
               </option>
             )}
           </select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="secondary" size="sm" onClick={() => headingFontInputRef.current?.click()}>
+              {branding.headingCustomFontBase64 ? 'Replace custom font' : 'Upload custom .ttf / .otf'}
+            </Button>
+            {branding.headingCustomFontBase64 && (
+              <>
+                <input
+                  type="text"
+                  value={branding.headingCustomFontName}
+                  onChange={(e) => setBranding({ headingCustomFontName: e.target.value })}
+                  placeholder="Font name"
+                  className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-2 py-1 text-xs w-32"
+                />
+                <Button variant="ghost" size="sm" onClick={() => setBranding({ headingCustomFontBase64: null, headingCustomFontName: '' })}>Remove</Button>
+              </>
+            )}
+          </div>
+          {branding.headingCustomFontBase64 && (
+            <p className="text-[11px] text-slate-400">Font loaded — select &ldquo;{branding.headingCustomFontName} (custom uploaded)&rdquo; in the dropdown above to apply it.</p>
+          )}
+          <input ref={headingFontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="sr-only" onChange={handleHeadingFontUpload} />
         </div>
 
-        {/* Custom font */}
-        <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">
-            Custom brand font
-            <span className="text-[10px] text-slate-400 font-normal ml-1">(for PDF text annotations)</span>
+        {/* Body / annotation font */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            Body / annotation font
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(default font for text added to PDFs)</span>
           </label>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="secondary" size="sm" onClick={() => fontInputRef.current?.click()}>
-              {branding.customFontBase64 ? 'Replace font' : 'Upload .ttf / .otf'}
-            </Button>
-            {branding.customFontBase64 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setBranding({ customFontBase64: null })}
-              >
-                Remove
-              </Button>
+          <select
+            value={branding.bodyFontFamily}
+            onChange={(e) => setBranding({ bodyFontFamily: e.target.value })}
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+          >
+            <option value="Helvetica">Helvetica (default)</option>
+            <option value="Arial">Arial</option>
+            <option value="Times-Roman">Times New Roman</option>
+            <option value="Courier">Courier</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Verdana">Verdana</option>
+            {(branding.bodyCustomFontBase64 ?? branding.customFontBase64) && (branding.bodyCustomFontName || branding.customFontName) && (
+              <option value={branding.bodyCustomFontName || branding.customFontName}>
+                {branding.bodyCustomFontName || branding.customFontName} (custom uploaded)
+              </option>
             )}
-            <input
-              type="text"
-              value={branding.customFontName}
-              onChange={(e) => setBranding({ customFontName: e.target.value })}
-              placeholder="Font family name"
-              className="border border-slate-200 rounded px-2 py-1 text-xs w-32"
-              title="CSS font-family name to register (e.g. VAG Rounded)"
-            />
+          </select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="secondary" size="sm" onClick={() => bodyFontInputRef.current?.click()}>
+              {(branding.bodyCustomFontBase64 ?? branding.customFontBase64) ? 'Replace custom font' : 'Upload custom .ttf / .otf'}
+            </Button>
+            {(branding.bodyCustomFontBase64 ?? branding.customFontBase64) && (
+              <>
+                <input
+                  type="text"
+                  value={branding.bodyCustomFontName || branding.customFontName}
+                  onChange={(e) => setBranding({ bodyCustomFontName: e.target.value })}
+                  placeholder="Font name"
+                  className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-2 py-1 text-xs w-32"
+                />
+                <Button variant="ghost" size="sm" onClick={() => setBranding({ bodyCustomFontBase64: null, bodyCustomFontName: '', customFontBase64: null })}>Remove</Button>
+              </>
+            )}
           </div>
-          <input
-            ref={fontInputRef}
-            type="file"
-            accept=".ttf,.otf,.woff,.woff2"
-            className="sr-only"
-            onChange={handleFontUpload}
-          />
-          <p className="text-xs text-slate-400 mt-1">
-            {branding.customFontBase64
-              ? `Font loaded · registered as "${branding.customFontName}"`
-              : 'Upload your licensed TTF/OTF file. Stored in brand-config.json — never sent to any server.'}
-          </p>
+          {(branding.bodyCustomFontBase64 ?? branding.customFontBase64) && (
+            <p className="text-[11px] text-slate-400">Font loaded — select &ldquo;{branding.bodyCustomFontName || branding.customFontName} (custom uploaded)&rdquo; above. Embedded in exported PDFs.</p>
+          )}
+          <input ref={bodyFontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="sr-only" onChange={handleBodyFontUpload} />
+          <p className="text-[11px] text-slate-400">Preset fonts use standard PDF fonts (no extra embedding). Custom font is embedded in every exported PDF.</p>
         </div>
 
         {/* GitHub integration status */}
