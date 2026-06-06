@@ -7,14 +7,17 @@
  */
 
 import { PDFPage, PDFDocument, StandardFonts, LineCapStyle } from 'pdf-lib'
+import type { PDFFont } from 'pdf-lib'
 import type { Annotation } from '@/types/annotation'
 import { hexToPdfRgb } from '@/utils/colorUtils'
+import type { DmSansFontSet } from './dmSansFont'
 
 interface SerialiseOptions {
   scale: number
   pageWidthPt: number
   pageHeightPt: number
   customFont?: { name: string; bytes: Uint8Array } | null
+  dmSansFonts?: DmSansFontSet
 }
 
 function canvasYToPdfY(
@@ -32,7 +35,7 @@ export async function serialiseAnnotations(
   annotations: Annotation[],
   opts: SerialiseOptions,
 ): Promise<void> {
-  const { scale, pageHeightPt, customFont } = opts
+  const { scale, pageHeightPt, customFont, dmSansFonts } = opts
 
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
@@ -47,8 +50,24 @@ export async function serialiseAnnotations(
   const courierOblique = await pdfDoc.embedFont(StandardFonts.CourierOblique)
   const courierBoldOblique = await pdfDoc.embedFont(StandardFonts.CourierBoldOblique)
 
-  // Embed custom font once if provided (lazy, only when actually needed)
-  let embeddedCustomFont: Awaited<ReturnType<typeof pdfDoc.embedFont>> | null = null
+  // Embed DM Sans variants once if font data was provided
+  let dmSansEmbed: { regular: PDFFont; bold: PDFFont; italic: PDFFont; boldItalic: PDFFont } | null = null
+  if (dmSansFonts) {
+    try {
+      const [regular, bold, italic, boldItalic] = await Promise.all([
+        pdfDoc.embedFont(dmSansFonts.regular, { subset: true }),
+        pdfDoc.embedFont(dmSansFonts.bold, { subset: true }),
+        pdfDoc.embedFont(dmSansFonts.italic, { subset: true }),
+        pdfDoc.embedFont(dmSansFonts.boldItalic, { subset: true }),
+      ])
+      dmSansEmbed = { regular, bold, italic, boldItalic }
+    } catch {
+      // Fall through to Helvetica if DM Sans embedding fails
+    }
+  }
+
+  // Embed custom (branding) font once, lazily on first use
+  let embeddedCustomFont: PDFFont | null = null
   async function getCustomFont() {
     if (!embeddedCustomFont && customFont) {
       try {
@@ -60,11 +79,7 @@ export async function serialiseAnnotations(
     return embeddedCustomFont
   }
 
-  function pickStandardFont(
-    family: string,
-    bold: boolean,
-    italic: boolean,
-  ): Awaited<ReturnType<typeof pdfDoc.embedFont>> {
+  function pickStandardFont(family: string, bold: boolean, italic: boolean): PDFFont {
     const f = family.toLowerCase()
     if (f.includes('times') || f === 'georgia') {
       return bold && italic ? timesBoldItalic : bold ? timesBold : italic ? timesItalic : timesRoman
@@ -72,7 +87,7 @@ export async function serialiseAnnotations(
     if (f.includes('courier')) {
       return bold && italic ? courierBoldOblique : bold ? courierBold : italic ? courierOblique : courier
     }
-    // Helvetica / Arial / Verdana / default
+    // Helvetica / Arial / Verdana / DM Sans fallback / default
     return bold && italic ? helveticaBoldOblique : bold ? helveticaBold : italic ? helveticaOblique : helvetica
   }
 
@@ -86,10 +101,19 @@ export async function serialiseAnnotations(
 
     switch (ann.type) {
       case 'text': {
+        const isDmSans = ann.fontFamily === 'DM Sans'
         const usesCustomFont = customFont && ann.fontFamily === customFont.name
-        const font = usesCustomFont
-          ? ((await getCustomFont()) ?? helvetica)
-          : pickStandardFont(ann.fontFamily, ann.fontBold, ann.fontItalic)
+        let font: PDFFont
+        if (isDmSans && dmSansEmbed) {
+          font = ann.fontBold && ann.fontItalic ? dmSansEmbed.boldItalic
+            : ann.fontBold ? dmSansEmbed.bold
+            : ann.fontItalic ? dmSansEmbed.italic
+            : dmSansEmbed.regular
+        } else if (usesCustomFont) {
+          font = (await getCustomFont()) ?? helvetica
+        } else {
+          font = pickStandardFont(ann.fontFamily, ann.fontBold, ann.fontItalic)
+        }
         const fontSize = ann.fontSize / scale
         page.drawText(ann.text || ' ', {
           x,

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "copy-worker": "node -e \"const fs=require('fs'); fs.cpSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs','public/pdf.worker.min.js'); fs.cpSync('node_modules/tesseract.js/dist/worker.min.js','public/tesseract-worker.min.js'); fs.cpSync('node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js','public/tesseract-core-simd-lstm.wasm.js');\"",
+    "copy-worker": "node -e \"const fs=require('fs'); fs.cpSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs','public/pdf.worker.min.js'); fs.cpSync('node_modules/tesseract.js/dist/worker.min.js','public/tesseract-worker.min.js'); fs.cpSync('node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js','public/tesseract-core-simd-lstm.wasm.js'); fs.mkdirSync('public/fonts',{recursive:true}); ['400-normal','400-italic','700-normal','700-italic'].forEach(v=>fs.cpSync('node_modules/@fontsource/dm-sans/files/dm-sans-latin-'+v+'.woff2','public/fonts/dm-sans-'+v+'.woff2'));\"",
     "predev": "npm run copy-worker",
     "prebuild": "npm run copy-worker",
     "dev": "vite",
@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@fontsource/dm-sans": "^5.2.8",
     "@playwright/test": "^1.52.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",

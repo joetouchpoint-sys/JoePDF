@@ -15,6 +15,8 @@ import { PDFDocument, PDFName, degrees } from 'pdf-lib'
 import type { Annotation, FormFieldAnnotation } from '@/types/annotation'
 import type { PageMeta } from '@/types/pdf'
 import { serialiseAnnotations } from './annotationSerializer'
+import { loadDmSansFonts } from './dmSansFont'
+import type { DmSansFontSet } from './dmSansFont'
 
 export interface ExportOptions {
   removeMetadata: boolean
@@ -80,6 +82,14 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
     }
   }
 
+  // Load DM Sans fonts if any text annotation uses that family
+  let dmSansFonts: DmSansFontSet | undefined
+  const hasDmSans = [...annotationsByPage.values()].flat()
+    .some((a) => a.type === 'text' && (a as Extract<Annotation, { type: 'text' }>).fontFamily === 'DM Sans')
+  if (hasDmSans) {
+    try { dmSansFonts = await loadDmSansFonts() } catch { /* fall back to Helvetica */ }
+  }
+
   const outDoc = await PDFDocument.create()
 
   for (let logicalIdx = 0; logicalIdx < pageOrder.length; logicalIdx++) {
@@ -114,6 +124,7 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
           pageWidthPt: viewport.width,
           pageHeightPt: viewport.height,
           customFont,
+          dmSansFonts,
         })
       }
 
