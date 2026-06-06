@@ -436,11 +436,38 @@ export function BrandingConfigPanel() {
           </div>
         </div>
 
+        {/* Heading font */}
+        <div>
+          <label className="text-xs font-medium text-slate-600 block mb-1">
+            Heading font
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(app name &amp; org name)</span>
+          </label>
+          <select
+            value={branding.headingFontFamily}
+            onChange={(e) => setBranding({ headingFontFamily: e.target.value })}
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]"
+          >
+            <option value="'Nunito', 'VAG Rounded', system-ui, sans-serif">Nunito (default)</option>
+            <option value="system-ui, sans-serif">System default</option>
+            <option value="'Arial', sans-serif">Arial</option>
+            <option value="'Georgia', serif">Georgia</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+            <option value="'Verdana', sans-serif">Verdana</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            {branding.customFontBase64 && branding.customFontName && (
+              <option value={`'${branding.customFontName}', system-ui, sans-serif`}>
+                {branding.customFontName} (brand font)
+              </option>
+            )}
+          </select>
+        </div>
+
         {/* Custom font */}
         <div>
           <label className="text-xs font-medium text-slate-600 block mb-1">
             Custom brand font
-            <span className="text-[10px] text-slate-400 font-normal ml-1">(headline text)</span>
+            <span className="text-[10px] text-slate-400 font-normal ml-1">(for PDF text annotations)</span>
           </label>
           <div className="flex items-center gap-2 flex-wrap">
             <Button variant="secondary" size="sm" onClick={() => fontInputRef.current?.click()}>

@@ -101,14 +101,14 @@ export function UploadScreen() {
       <div className="text-center flex-shrink-0">
         <p
           className="text-sm font-semibold uppercase tracking-widest mb-1.5"
-          style={{ color: branding.primaryColor || '#178351', fontFamily: "'DM Sans', system-ui" }}
+          style={{ color: branding.primaryColor || '#178351', fontFamily: branding.headingFontFamily }}
         >
           {branding.orgName}
         </p>
         {branding.logoDataUrl ? (
           <img src={branding.logoDataUrl} alt={branding.appName} className="h-12 w-auto object-contain mx-auto mb-2" />
         ) : (
-          <h1 className="text-2xl font-bold mb-1.5" style={{ color: branding.secondaryColor || '#292C4F', fontFamily: "'Nunito','VAG Rounded',system-ui" }}>
+          <h1 className="text-2xl font-bold mb-1.5" style={{ color: branding.secondaryColor || '#292C4F', fontFamily: branding.headingFontFamily }}>
             {branding.appName}
           </h1>
         )}

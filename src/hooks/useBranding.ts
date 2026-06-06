@@ -15,6 +15,7 @@ export function useBranding() {
       const resolved = config ?? DEFAULT_BRANDING
       setBranding(resolved)
       applyBrandingToDom(resolved)
+      try { localStorage.setItem('joepdf_branding', JSON.stringify(resolved)) } catch { /* quota exceeded — ok */ }
     })
   }, [setBranding])
 

@@ -38,6 +38,14 @@ export async function serialiseAnnotations(
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique)
   const helveticaBoldOblique = await pdfDoc.embedFont(StandardFonts.HelveticaBoldOblique)
+  const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman)
+  const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold)
+  const timesItalic = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic)
+  const timesBoldItalic = await pdfDoc.embedFont(StandardFonts.TimesRomanBoldItalic)
+  const courier = await pdfDoc.embedFont(StandardFonts.Courier)
+  const courierBold = await pdfDoc.embedFont(StandardFonts.CourierBold)
+  const courierOblique = await pdfDoc.embedFont(StandardFonts.CourierOblique)
+  const courierBoldOblique = await pdfDoc.embedFont(StandardFonts.CourierBoldOblique)
 
   // Embed custom font once if provided (lazy, only when actually needed)
   let embeddedCustomFont: Awaited<ReturnType<typeof pdfDoc.embedFont>> | null = null
@@ -50,6 +58,22 @@ export async function serialiseAnnotations(
       }
     }
     return embeddedCustomFont
+  }
+
+  function pickStandardFont(
+    family: string,
+    bold: boolean,
+    italic: boolean,
+  ): Awaited<ReturnType<typeof pdfDoc.embedFont>> {
+    const f = family.toLowerCase()
+    if (f.includes('times') || f === 'georgia') {
+      return bold && italic ? timesBoldItalic : bold ? timesBold : italic ? timesItalic : timesRoman
+    }
+    if (f.includes('courier')) {
+      return bold && italic ? courierBoldOblique : bold ? courierBold : italic ? courierOblique : courier
+    }
+    // Helvetica / Arial / Verdana / default
+    return bold && italic ? helveticaBoldOblique : bold ? helveticaBold : italic ? helveticaOblique : helvetica
   }
 
   for (const ann of annotations) {
@@ -65,13 +89,7 @@ export async function serialiseAnnotations(
         const usesCustomFont = customFont && ann.fontFamily === customFont.name
         const font = usesCustomFont
           ? ((await getCustomFont()) ?? helvetica)
-          : ann.fontBold && ann.fontItalic
-            ? helveticaBoldOblique
-            : ann.fontBold
-              ? helveticaBold
-              : ann.fontItalic
-                ? helveticaOblique
-                : helvetica
+          : pickStandardFont(ann.fontFamily, ann.fontBold, ann.fontItalic)
         const fontSize = ann.fontSize / scale
         page.drawText(ann.text || ' ', {
           x,

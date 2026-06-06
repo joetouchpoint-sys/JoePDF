@@ -8,8 +8,16 @@ export interface BrandingSlice {
   resetBranding: () => void
 }
 
+function loadCachedBranding(): BrandingConfig {
+  try {
+    const raw = localStorage.getItem('joepdf_branding')
+    if (raw) return { ...DEFAULT_BRANDING, ...JSON.parse(raw) as Partial<BrandingConfig> }
+  } catch { /* ok */ }
+  return DEFAULT_BRANDING
+}
+
 export const createBrandingSlice: StateCreator<BrandingSlice> = (set) => ({
-  branding: DEFAULT_BRANDING,
+  branding: loadCachedBranding(),
 
   setBranding: (update) =>
     set((state) => ({ branding: { ...state.branding, ...update } })),

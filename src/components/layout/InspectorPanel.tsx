@@ -54,7 +54,12 @@ function TextAnnotationControls({
 }) {
   const { branding } = useBranding()
   const fonts = [
-    { value: 'DM Sans', label: 'Default (DM Sans)' },
+    { value: 'Helvetica', label: 'Helvetica' },
+    { value: 'Times-Roman', label: 'Times New Roman' },
+    { value: 'Courier', label: 'Courier' },
+    { value: 'Arial', label: 'Arial' },
+    { value: 'Georgia', label: 'Georgia' },
+    { value: 'Verdana', label: 'Verdana' },
     ...(branding.customFontBase64 && branding.customFontName
       ? [{ value: branding.customFontName, label: `${branding.customFontName} (brand)` }]
       : []),
@@ -64,20 +69,18 @@ function TextAnnotationControls({
     <>
       <ColorInput label="Colour" value={annotation.fontColor} onChange={(v) => update({ fontColor: v })} />
       <NumberInput label="Font size" value={annotation.fontSize} onChange={(v) => update({ fontSize: v })} min={6} max={96} />
-      {fonts.length > 1 && (
-        <div className="flex items-center justify-between gap-2">
-          <label className="text-xs text-slate-500 flex-shrink-0">Font</label>
-          <select
-            value={annotation.fontFamily}
-            onChange={(e) => update({ fontFamily: e.target.value })}
-            className="text-xs border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-[--color-primary]"
-          >
-            {fonts.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        <label className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">Font</label>
+        <select
+          value={annotation.fontFamily}
+          onChange={(e) => update({ fontFamily: e.target.value })}
+          className="text-xs border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-[--color-primary]"
+        >
+          {fonts.map((f) => (
+            <option key={f.value} value={f.value}>{f.label}</option>
+          ))}
+        </select>
+      </div>
       <div className="flex gap-1.5">
         <button
           onClick={() => update({ fontBold: !annotation.fontBold })}

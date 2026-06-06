@@ -11,13 +11,13 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-function buildDraft(id: string, includePdfBytes: boolean): AutosaveDraft {
+function buildDraft(id: string): AutosaveDraft {
   const state = useStore.getState()
   return {
     id,
     savedAt: Date.now(),
     fileName: state.pdf.fileName ?? 'document.pdf',
-    pdfBytes: includePdfBytes ? (state.pdf.pdfBytes ?? new ArrayBuffer(0)) : new ArrayBuffer(0),
+    pdfBytes: state.pdf.pdfBytes ?? new ArrayBuffer(0),
     annotations: Array.from(state.annotations.entries()) as [number, import('@/types/annotation').Annotation[]][],
     pageOrder: [...state.pdf.pageOrder],
     pageRotations: Array.from(state.ui.pageRotations.entries()),
@@ -46,14 +46,14 @@ export function useAutosave() {
       sessionStorage.setItem(SESSION_KEY, id)
       sessionIdRef.current = id
 
-      // Save initial draft immediately (includes pdfBytes — only written once)
-      void saveDraft(buildDraft(id, true))
+      // Save initial draft immediately
+      void saveDraft(buildDraft(id))
 
-      // After 2 min, start saving annotations+state every minute
+      // After 2 min, start saving full state every minute
       initialTimerRef.current = setTimeout(() => {
         intervalRef.current = setInterval(() => {
           if (sessionIdRef.current) {
-            void saveDraft(buildDraft(sessionIdRef.current, false))
+            void saveDraft(buildDraft(sessionIdRef.current))
           }
         }, INTERVAL_MS)
       }, INITIAL_DELAY_MS)

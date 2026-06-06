@@ -15,22 +15,40 @@ interface PDFPageProps {
 
 export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const outerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
   const [pageProxy, setPageProxy] = useState<PDFPageProxy | null>(null)
   const [isRendering, setIsRendering] = useState(true)
+  const [hasBeenVisible, setHasBeenVisible] = useState(false)
   const rotation = useStore((s) => s.ui.pageRotations.get(pageIndex) ?? 0)
   const textSelectMode = useStore((s) => s.ui.textSelectMode)
 
+  // Only render once the page scrolls near the viewport — prevents iOS canvas memory exhaustion
   useEffect(() => {
+    const el = outerRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasBeenVisible(true)
+          obs.disconnect()
+        }
+      },
+      { rootMargin: '400px' },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!hasBeenVisible) return
     const canvas = canvasRef.current
     if (!canvas) return
 
     setIsRendering(true)
 
-    // Each page gets its own independent render handle — no cross-page cancellations
     const handle = renderPageToCanvas(doc, pageNumber, canvas, scale)
 
-    // Get the page proxy for the text layer (separate from the render)
     doc.getPage(pageNumber).then((proxy) => setPageProxy(proxy)).catch(() => {})
 
     handle.promise.then(() => {
@@ -41,21 +59,31 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
     })
 
     return () => handle.cancel()
-  }, [doc, pageNumber, scale])
+  }, [doc, pageNumber, scale, hasBeenVisible])
+
+  // A4 proportions as placeholder while not yet visible / rendering
+  const placeholderW = Math.floor(595 * scale)
+  const placeholderH = Math.floor(842 * scale)
+  const displayW = dimensions.width || placeholderW
+  const displayH = dimensions.height || placeholderH
 
   return (
     <div
+      ref={outerRef}
       id={`pdf-page-${pageIndex}`}
       data-page-index={pageIndex}
       className="relative flex-shrink-0 shadow-lg bg-white"
-      style={{ transform: rotation ? `rotate(${rotation}deg)` : undefined }}
+      style={{
+        width: displayW,
+        height: displayH,
+        transform: rotation ? `rotate(${rotation}deg)` : undefined,
+      }}
     >
-      {isRendering && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-slate-50"
-          style={{ width: dimensions.width || 595, height: dimensions.height || 842 }}
-        >
-          <div className="w-5 h-5 border-2 border-[--color-primary] border-t-transparent rounded-full animate-spin" />
+      {(!hasBeenVisible || isRendering) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+          {hasBeenVisible && (
+            <div className="w-5 h-5 border-2 border-[--color-primary] border-t-transparent rounded-full animate-spin" />
+          )}
         </div>
       )}
 

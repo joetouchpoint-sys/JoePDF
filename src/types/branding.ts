@@ -12,6 +12,7 @@ export interface BrandingConfig {
   privacyNotice: string
   customFontBase64: string | null
   customFontName: string
+  headingFontFamily: string
   uploadDescription: string
   reportIssueUrl: string
 }
@@ -22,14 +23,15 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   logoDataUrl: null,
   headerLogoDataUrl: null,
   faviconDataUrl: null,
-  primaryColor: '#178351',   // Family Action Green
-  secondaryColor: '#292C4F', // Navy Blue
-  accentColor: '#A0DA00',    // Lime Green
+  primaryColor: '#178351',
+  secondaryColor: '#292C4F',
+  accentColor: '#A0DA00',
   footerText: '',
   supportEmail: '',
   privacyNotice: '',
   customFontBase64: null,
   customFontName: 'VAG Rounded',
+  headingFontFamily: "'Nunito', 'VAG Rounded', system-ui, sans-serif",
   uploadDescription: 'Edit, redact, and manage PDF documents — entirely in your browser.',
   reportIssueUrl: '',
 }

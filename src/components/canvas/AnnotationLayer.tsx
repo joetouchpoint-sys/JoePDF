@@ -252,6 +252,9 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onTouchStart={(e) => handleMouseDown(e as unknown as Konva.KonvaEventObject<MouseEvent>)}
+      onTouchMove={(e) => handleMouseMove(e as unknown as Konva.KonvaEventObject<MouseEvent>)}
+      onTouchEnd={handleMouseUp}
     >
       <Layer>
         {annotations.map((ann) => {

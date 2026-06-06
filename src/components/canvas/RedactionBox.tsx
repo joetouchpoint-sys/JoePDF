@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Rect, Group } from 'react-konva'
 import type Konva from 'konva'
 import type { RedactAnnotation } from '@/types/annotation'
@@ -14,6 +14,7 @@ interface Props {
 
 export function RedactionBoxShape({ annotation, isSelected, onSelect, onDragEnd, onResizeEnd }: Props) {
   const rectRef = useRef<Konva.Rect>(null)
+  const [hovered, setHovered] = useState(false)
 
   return (
     <Group>
@@ -27,11 +28,13 @@ export function RedactionBoxShape({ annotation, isSelected, onSelect, onDragEnd,
         stroke={annotation.applied ? undefined : '#ef4444'}
         strokeWidth={annotation.applied ? 0 : 1.5}
         dash={annotation.applied ? undefined : [6, 3]}
-        opacity={annotation.applied ? 1 : 0.85}
+        opacity={annotation.applied ? 1 : hovered ? 0.55 : 1}
         visible={annotation.visible}
         draggable={isSelected && !annotation.applied}
         onClick={onSelect}
         onTap={onSelect}
+        onMouseEnter={() => { if (!annotation.applied) setHovered(true) }}
+        onMouseLeave={() => setHovered(false)}
         onDragEnd={(e) => onDragEnd({ x: e.target.x(), y: e.target.y() })}
       />
       {!annotation.applied && (
