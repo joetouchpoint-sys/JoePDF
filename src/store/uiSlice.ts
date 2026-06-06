@@ -80,7 +80,7 @@ const initialDrawingDefaults: DrawingDefaults = {
   fillColor: null,
   strokeWidth: 2,
   fontSize: 16,
-  fontFamily: 'Helvetica',
+  fontFamily: 'DM Sans',
   fontColor: '#292C4F',
   highlightColor: '#A0DA00',
 }

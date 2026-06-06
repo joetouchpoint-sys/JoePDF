@@ -16,7 +16,7 @@ export function useBranding() {
       const resolved = config ?? DEFAULT_BRANDING
       setBranding(resolved)
       applyBrandingToDom(resolved)
-      setDrawingDefaults({ fontFamily: resolved.bodyFontFamily })
+      if (resolved.bodyCustomFontBase64) setDrawingDefaults({ fontFamily: resolved.bodyFontFamily })
       try { localStorage.setItem('joepdf_branding', JSON.stringify(resolved)) } catch { /* quota exceeded — ok */ }
     }).catch(() => { /* fetch or apply failed — cached/default branding remains */ })
   }, [setBranding, setDrawingDefaults])
@@ -24,7 +24,7 @@ export function useBranding() {
   // Apply CSS vars whenever branding changes (e.g. admin edits in the panel)
   useEffect(() => {
     applyBrandingToDom(branding)
-    setDrawingDefaults({ fontFamily: branding.bodyFontFamily })
+    if (branding.bodyCustomFontBase64) setDrawingDefaults({ fontFamily: branding.bodyFontFamily })
   }, [branding, setDrawingDefaults])
 
   return { branding, setBranding }

@@ -7,9 +7,10 @@ interface SelectionTransformerProps {
   isSelected: boolean
   onResizeEnd?: (geo: { x: number; y: number; width: number; height: number }) => void
   keepAspectRatio?: boolean
+  normalizeScale?: boolean
 }
 
-export function SelectionTransformer({ nodeRef, isSelected, onResizeEnd, keepAspectRatio = false }: SelectionTransformerProps) {
+export function SelectionTransformer({ nodeRef, isSelected, onResizeEnd, keepAspectRatio = false, normalizeScale = false }: SelectionTransformerProps) {
   const transformerRef = useRef<Konva.Transformer>(null)
 
   useEffect(() => {
@@ -35,6 +36,16 @@ export function SelectionTransformer({ nodeRef, isSelected, onResizeEnd, keepAsp
       anchorFill="#fff"
       anchorSize={8}
       anchorCornerRadius={2}
+      onTransform={normalizeScale ? () => {
+        const node = nodeRef.current
+        if (!node) return
+        const sx = node.scaleX()
+        const sy = node.scaleY()
+        node.width(Math.max(10, node.width() * sx))
+        node.height(Math.max(10, node.height() * sy))
+        node.scaleX(1)
+        node.scaleY(1)
+      } : undefined}
       onTransformEnd={() => {
         const node = nodeRef.current
         if (!node || !onResizeEnd) return

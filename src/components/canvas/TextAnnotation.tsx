@@ -127,7 +127,7 @@ export function TextAnnotationShape({
         onDblTap={startEdit}
         onDragEnd={(e) => onDragEnd({ x: e.target.x(), y: e.target.y() })}
       />
-      <SelectionTransformer nodeRef={textRef} isSelected={isSelected} onResizeEnd={onResizeEnd} />
+      <SelectionTransformer nodeRef={textRef} isSelected={isSelected} onResizeEnd={onResizeEnd} normalizeScale />
     </Group>
   )
 }

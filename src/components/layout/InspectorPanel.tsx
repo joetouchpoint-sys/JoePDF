@@ -54,6 +54,7 @@ function TextAnnotationControls({
 }) {
   const { branding } = useBranding()
   const fonts = [
+    { value: 'DM Sans', label: 'DM Sans' },
     { value: 'Helvetica', label: 'Helvetica' },
     { value: 'Times-Roman', label: 'Times New Roman' },
     { value: 'Courier', label: 'Courier' },
