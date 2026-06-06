@@ -198,7 +198,7 @@ export function Header() {
               {isDirty && (
                 <span
                   className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: branding.accentColor || '#A0DA00' }}
+                  style={{ backgroundColor: branding.primaryColor || '#178351' }}
                   title="Unsaved changes"
                   aria-label="Unsaved changes"
                 />

@@ -43,7 +43,6 @@ export function applyBrandingToDom(config: BrandingConfig): void {
   const root = document.documentElement
   root.style.setProperty('--color-primary', config.primaryColor)
   root.style.setProperty('--color-secondary', config.secondaryColor)
-  root.style.setProperty('--color-accent', config.accentColor)
 
   // Font custom properties — used globally via index.css
   root.style.setProperty('--font-heading', config.headingFontFamily)

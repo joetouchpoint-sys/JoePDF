@@ -6,7 +6,6 @@ export interface BrandingConfig {
   faviconDataUrl: string | null     // browser tab / bookmark favicon (falls back to auto-generate from logo)
   primaryColor: string
   secondaryColor: string
-  accentColor: string
   footerText: string
   supportEmail: string
   privacyNotice: string
@@ -34,7 +33,6 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   faviconDataUrl: null,
   primaryColor: '#178351',
   secondaryColor: '#292C4F',
-  accentColor: '#A0DA00',
   footerText: '',
   supportEmail: '',
   privacyNotice: '',

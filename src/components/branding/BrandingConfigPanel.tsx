@@ -385,7 +385,7 @@ export function BrandingConfigPanel() {
 
         {/* Colours */}
         <div className="grid grid-cols-3 gap-3">
-          {(['primaryColor', 'secondaryColor', 'accentColor'] as const).map((key) => (
+          {(['primaryColor', 'secondaryColor'] as const).map((key) => (
             <div key={key}>
               <label className="text-xs text-slate-500 block mb-1 capitalize">
                 {key.replace('Color', '')}
