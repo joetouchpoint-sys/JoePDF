@@ -98,7 +98,7 @@ export function PDFPage({ doc, pageNumber, pageIndex, scale, isActive }: PDFPage
         showToast(`Done — found ${words.length} words. Switch to "Select text" mode to copy.`, 'success')
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'OCR failed.', 'error')
+      showToast(err instanceof Error ? err.message : String(err) || 'OCR failed.', 'error')
     } finally {
       setIsOcrRunning(false)
     }
