@@ -177,30 +177,42 @@ export function ToolBar() {
             PDF text
           </p>
         )}
-        <Tooltip content="Select & copy text from PDF" shortcut="Q" side="right">
-          <button
-            type="button"
-            onClick={() => setTextSelectMode(!textSelectMode)}
-            aria-pressed={textSelectMode}
-            aria-label="Select text from PDF"
-            className={clsx(
-              'flex items-center gap-2 rounded-lg transition-all duration-100',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
-              textSelectMode
-                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200',
-            )}
-          >
-            <MousePointerClick className="w-4 h-4 flex-shrink-0" />
-            {expanded && <span className="flex-1 truncate">Select text</span>}
-            {expanded && (
-              <span className={clsx('ml-auto text-[10px] flex-shrink-0', textSelectMode ? 'opacity-70' : 'opacity-40')}>
-                Q
-              </span>
-            )}
-          </button>
-        </Tooltip>
+        {(() => {
+          const button = (
+            <button
+              type="button"
+              onClick={() => setTextSelectMode(!textSelectMode)}
+              aria-pressed={textSelectMode}
+              aria-label="Select text from PDF"
+              className={clsx(
+                'flex items-center gap-2 rounded-lg transition-all duration-100',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+                expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+                textSelectMode
+                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200',
+              )}
+            >
+              <MousePointerClick className="w-4 h-4 flex-shrink-0" />
+              {expanded && <span className="truncate">Select text</span>}
+              {expanded && (
+                <span className={clsx('ml-auto text-[10px] flex-shrink-0', textSelectMode ? 'opacity-70' : 'opacity-40')}>
+                  Q
+                </span>
+              )}
+            </button>
+          )
+          // Match ToolButton: only wrap in Tooltip when collapsed — Tooltip's
+          // `inline-flex` wrapper shrink-wraps its content, which would override
+          // the button's `w-full` and pack the shortcut next to the label instead
+          // of pinning it to the right edge like every other tool.
+          if (expanded) return button
+          return (
+            <Tooltip content="Select & copy text from PDF" shortcut="Q" side="right">
+              {button}
+            </Tooltip>
+          )
+        })()}
       </div>
 
       {/* Redact */}
