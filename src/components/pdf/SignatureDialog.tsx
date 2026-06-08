@@ -46,7 +46,7 @@ export function SignatureDialog() {
   const [selectedFont, setSelectedFont] = useState<string>(SIGN_FONTS[0].name)
   const [uploadedSrc, setUploadedSrc] = useState<string | null>(null)
   const [hasDrawing, setHasDrawing] = useState(false)
-  const [stampSize, setStampSize] = useState<StampSize>('small')
+  const [stampSize, setStampSize] = useState<StampSize>('medium')
 
   const drawCanvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
