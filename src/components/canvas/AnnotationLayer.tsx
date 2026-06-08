@@ -64,6 +64,15 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     return () => window.removeEventListener('joepdf:delete-selected', handler)
   }, [annotations, pageIndex, dispatch, setSelectedId])
 
+  // Canvas text doesn't repaint itself once a custom branding font finishes
+  // loading (see brandingLoader.applyBrandingToDom) — force a redraw so text
+  // annotations switch from the fallback font to the real one.
+  useEffect(() => {
+    const handler = () => stageRef.current?.getLayers()[0]?.batchDraw()
+    window.addEventListener('joepdf:fonts-ready', handler)
+    return () => window.removeEventListener('joepdf:fonts-ready', handler)
+  }, [])
+
   // Use getRelativePointerPosition to get coordinates in stage space (PDF units).
   // The Stage has scaleX/scaleY = zoom, so relative position = canvas_px / zoom = PDF units.
   const getPos = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {

@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import { useStore } from '@/store'
 
-const ZOOM_STEP = 0.25
-const MIN_ZOOM = 0.25
-const MAX_ZOOM = 4
+export const ZOOM_STEP = 0.25
+export const MIN_ZOOM = 0.25
+export const MAX_ZOOM = 4
 
 export function useZoom() {
   const zoom = useStore((s) => s.ui.zoom)

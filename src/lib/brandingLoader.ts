@@ -70,6 +70,20 @@ export function applyBrandingToDom(config: BrandingConfig): void {
     style.textContent = faces.join('\n')
     document.head.appendChild(style)
   }
+
+  // Canvas text (Konva annotations, signature stamps) is drawn with the native
+  // 2D context, which — unlike regular DOM text — does NOT lazily trigger the
+  // @font-face load and never repaints itself once the font becomes available.
+  // Explicitly load the active custom fonts into document.fonts (the same
+  // pattern SignatureDialog uses for its canvas) and notify listeners so they
+  // can redraw with the now-available font instead of a silent fallback.
+  const namesToLoad = new Set<string>()
+  if (bodyBase64 && bodyName) namesToLoad.add(bodyName)
+  if (headingBase64 && headingName) namesToLoad.add(headingName)
+  if (namesToLoad.size > 0) {
+    void Promise.all([...namesToLoad].map((n) => document.fonts.load(`16px "${n}"`).catch(() => {})))
+      .then(() => window.dispatchEvent(new Event('joepdf:fonts-ready')))
+  }
 }
 
 /** Download the current branding config as a brand-config.json file.

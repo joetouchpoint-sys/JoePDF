@@ -102,9 +102,14 @@ export function useAutosave() {
   }, [pageCount])
 }
 
-/** Call this when the user intentionally closes or downloads — clears the draft */
-export function clearAutosaveDraft() {
+/**
+ * Call this when the user intentionally closes or downloads — clears the draft.
+ * Returns a promise that resolves once the IndexedDB record is gone, so callers
+ * that subsequently mount the upload screen (which checks for a draft on mount)
+ * can await it first and avoid a stale "Unsaved work found" prompt.
+ */
+export async function clearAutosaveDraft(): Promise<void> {
   const id = sessionStorage.getItem(SESSION_KEY)
   sessionStorage.removeItem(SESSION_KEY)
-  if (id) void deleteDraft(id)
+  if (id) await deleteDraft(id)
 }

@@ -513,7 +513,19 @@ export function BrandingConfigPanel() {
                 <input
                   type="text"
                   value={branding.headingCustomFontName}
-                  onChange={(e) => setBranding({ headingCustomFontName: e.target.value })}
+                  onChange={(e) => {
+                    const newName = e.target.value
+                    // The dropdown's "(custom uploaded)" option bakes the name into
+                    // headingFontFamily at selection time. Keep it in sync on rename —
+                    // otherwise it goes stale and points at a family the @font-face
+                    // (re-registered under the new name) no longer provides, silently
+                    // breaking the heading font.
+                    const wasActive = branding.headingFontFamily === `'${branding.headingCustomFontName}', system-ui, sans-serif`
+                    setBranding({
+                      headingCustomFontName: newName,
+                      ...(wasActive ? { headingFontFamily: `'${newName}', system-ui, sans-serif` } : {}),
+                    })
+                  }}
                   placeholder="Font name"
                   aria-label="Heading custom font name"
                   className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-2 py-1 text-xs w-32"
@@ -561,7 +573,22 @@ export function BrandingConfigPanel() {
                 <input
                   type="text"
                   value={branding.bodyCustomFontName || branding.customFontName}
-                  onChange={(e) => setBranding({ bodyCustomFontName: e.target.value })}
+                  onChange={(e) => {
+                    const newName = e.target.value
+                    const oldName = branding.bodyCustomFontName || branding.customFontName
+                    // The dropdown's "(custom uploaded)" option bakes the name into
+                    // bodyFontFamily at selection time (and the exporter matches
+                    // ann.fontFamily against the live bodyCustomFontName — see
+                    // Header.tsx's customFont.name). Keep bodyFontFamily in sync on
+                    // rename so existing/new text annotations keep matching the
+                    // re-embedded custom font instead of silently falling back to
+                    // Helvetica on export.
+                    const wasActive = branding.bodyFontFamily === oldName
+                    setBranding({
+                      bodyCustomFontName: newName,
+                      ...(wasActive ? { bodyFontFamily: newName } : {}),
+                    })
+                  }}
                   placeholder="Font name"
                   aria-label="Body custom font name"
                   className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-2 py-1 text-xs w-32"

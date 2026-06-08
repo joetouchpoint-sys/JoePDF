@@ -20,49 +20,75 @@ interface ToolGroupDef {
   }>
 }
 
-const toolGroups: ToolGroupDef[] = [
-  {
-    label: 'Select',
-    tools: [
-      { tool: Tool.SELECT, label: 'Select', shortcut: 'V', icon: <MousePointer2 className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Add content',
-    tools: [
-      { tool: Tool.TEXT, label: 'Add text', shortcut: 'T', icon: <Type className="w-4 h-4" /> },
-      { tool: Tool.IMAGE, label: 'Add image', shortcut: 'I', icon: <ImageIcon className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Shapes',
-    tools: [
-      { tool: Tool.RECT, label: 'Rectangle', shortcut: 'R', icon: <Square className="w-4 h-4" /> },
-      { tool: Tool.ELLIPSE, label: 'Ellipse', shortcut: 'E', icon: <Circle className="w-4 h-4" /> },
-      { tool: Tool.LINE, label: 'Line', shortcut: 'L', icon: <Minus className="w-4 h-4" /> },
-      { tool: Tool.ARROW, label: 'Arrow', shortcut: 'A', icon: <ArrowRight className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Draw',
-    tools: [
-      { tool: Tool.FREEHAND, label: 'Freehand', shortcut: 'F', icon: <Pencil className="w-4 h-4" /> },
-      { tool: Tool.HIGHLIGHT, label: 'Highlight area', shortcut: 'H', icon: <Highlighter className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Redact',
-    tools: [
-      { tool: Tool.REDACT, label: 'Redact', shortcut: 'X', icon: <EraserIcon className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Forms',
-    tools: [
-      { tool: Tool.FORM_FIELD, label: 'Form field', shortcut: '', icon: <FormInput className="w-4 h-4" /> },
-    ],
-  },
-]
+// Order shown in the toolbar: Select, Select text, Redact, Page tools,
+// Add content, Shapes & draw, Form fields (last).
+const selectGroup: ToolGroupDef = {
+  label: 'Select',
+  tools: [
+    { tool: Tool.SELECT, label: 'Select', shortcut: 'V', icon: <MousePointer2 className="w-4 h-4" /> },
+  ],
+}
+
+const redactGroup: ToolGroupDef = {
+  label: 'Redact',
+  tools: [
+    { tool: Tool.REDACT, label: 'Redact', shortcut: 'X', icon: <EraserIcon className="w-4 h-4" /> },
+  ],
+}
+
+const addContentGroup: ToolGroupDef = {
+  label: 'Add content',
+  tools: [
+    { tool: Tool.TEXT, label: 'Add text', shortcut: 'T', icon: <Type className="w-4 h-4" /> },
+    { tool: Tool.IMAGE, label: 'Add image', shortcut: 'I', icon: <ImageIcon className="w-4 h-4" /> },
+  ],
+}
+
+const shapesAndDrawGroup: ToolGroupDef = {
+  label: 'Shapes & draw',
+  tools: [
+    { tool: Tool.RECT, label: 'Rectangle', shortcut: 'R', icon: <Square className="w-4 h-4" /> },
+    { tool: Tool.ELLIPSE, label: 'Ellipse', shortcut: 'E', icon: <Circle className="w-4 h-4" /> },
+    { tool: Tool.LINE, label: 'Line', shortcut: 'L', icon: <Minus className="w-4 h-4" /> },
+    { tool: Tool.ARROW, label: 'Arrow', shortcut: 'A', icon: <ArrowRight className="w-4 h-4" /> },
+    { tool: Tool.FREEHAND, label: 'Freehand', shortcut: 'F', icon: <Pencil className="w-4 h-4" /> },
+    { tool: Tool.HIGHLIGHT, label: 'Highlight area', shortcut: 'H', icon: <Highlighter className="w-4 h-4" /> },
+  ],
+}
+
+const formsGroup: ToolGroupDef = {
+  label: 'Forms',
+  tools: [
+    { tool: Tool.FORM_FIELD, label: 'Add form field', shortcut: 'D', icon: <FormInput className="w-4 h-4" /> },
+  ],
+}
+
+function ToolGroupSection({ group, expanded, first }: { group: ToolGroupDef; expanded: boolean; first?: boolean }) {
+  return (
+    <div
+      className={clsx(
+        'flex flex-col gap-0.5 w-full px-1.5',
+        !first && 'border-t border-slate-100 dark:border-slate-700 pt-2 mt-1',
+      )}
+    >
+      {expanded && (
+        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 mb-0.5">
+          {group.label}
+        </p>
+      )}
+      {group.tools.map((t) => (
+        <ToolButton
+          key={t.tool}
+          tool={t.tool}
+          label={t.label}
+          shortcut={t.shortcut}
+          icon={t.icon}
+          expanded={expanded}
+        />
+      ))}
+    </div>
+  )
+}
 
 interface PageTool {
   key: string
@@ -141,31 +167,44 @@ export function ToolBar() {
         </Tooltip>
       </div>
 
-      {toolGroups.map((group, gi) => (
-        <div
-          key={group.label}
-          className={clsx(
-            'flex flex-col gap-0.5 w-full px-1.5',
-            gi > 0 && 'border-t border-slate-100 dark:border-slate-700 pt-2 mt-1',
-          )}
-        >
-          {expanded && (
-            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 mb-0.5">
-              {group.label}
-            </p>
-          )}
-          {group.tools.map((t) => (
-            <ToolButton
-              key={t.tool}
-              tool={t.tool}
-              label={t.label}
-              shortcut={t.shortcut}
-              icon={t.icon}
-              expanded={expanded}
-            />
-          ))}
-        </div>
-      ))}
+      {/* Select */}
+      <ToolGroupSection group={selectGroup} expanded={expanded} first />
+
+      {/* Select text mode */}
+      <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-1 px-1.5">
+        {expanded && (
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 mb-0.5">
+            PDF text
+          </p>
+        )}
+        <Tooltip content="Select & copy text from PDF" shortcut="Q" side="right">
+          <button
+            type="button"
+            onClick={() => setTextSelectMode(!textSelectMode)}
+            aria-pressed={textSelectMode}
+            aria-label="Select text from PDF"
+            className={clsx(
+              'flex items-center gap-2 rounded-lg transition-all duration-100',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
+              textSelectMode
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200',
+            )}
+          >
+            <MousePointerClick className="w-4 h-4 flex-shrink-0" />
+            {expanded && <span className="flex-1 truncate">Select text</span>}
+            {expanded && (
+              <span className={clsx('ml-auto text-[10px] flex-shrink-0', textSelectMode ? 'opacity-70' : 'opacity-40')}>
+                Q
+              </span>
+            )}
+          </button>
+        </Tooltip>
+      </div>
+
+      {/* Redact */}
+      <ToolGroupSection group={redactGroup} expanded={expanded} />
 
       {/* Page tools */}
       <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-1 px-1.5 flex flex-col gap-0.5">
@@ -198,38 +237,14 @@ export function ToolBar() {
         ))}
       </div>
 
-      {/* Text select mode */}
-      <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-1 px-1.5">
-        {expanded && (
-          <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 mb-0.5">
-            PDF text
-          </p>
-        )}
-        <Tooltip content="Select & copy text from PDF" shortcut="Q" side="right">
-          <button
-            type="button"
-            onClick={() => setTextSelectMode(!textSelectMode)}
-            aria-pressed={textSelectMode}
-            aria-label="Select text from PDF"
-            className={clsx(
-              'flex items-center gap-2 rounded-lg transition-all duration-100',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-              expanded ? 'w-full px-2 py-1.5 text-xs font-medium' : 'w-9 h-9 justify-center',
-              textSelectMode
-                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200',
-            )}
-          >
-            <MousePointerClick className="w-4 h-4 flex-shrink-0" />
-            {expanded && <span className="flex-1 truncate">Select text</span>}
-            {expanded && (
-              <span className={clsx('ml-auto text-[10px] flex-shrink-0', textSelectMode ? 'opacity-70' : 'opacity-40')}>
-                Q
-              </span>
-            )}
-          </button>
-        </Tooltip>
-      </div>
+      {/* Add content */}
+      <ToolGroupSection group={addContentGroup} expanded={expanded} />
+
+      {/* Shapes & draw */}
+      <ToolGroupSection group={shapesAndDrawGroup} expanded={expanded} />
+
+      {/* Forms — last */}
+      <ToolGroupSection group={formsGroup} expanded={expanded} />
     </aside>
   )
 }

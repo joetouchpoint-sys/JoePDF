@@ -9,9 +9,9 @@ type SignTab = 'draw' | 'type' | 'upload'
 type StampSize = 'small' | 'medium' | 'large'
 
 const STAMP_SIZE_PX: Record<StampSize, number> = {
-  small: 90,
-  medium: 150,
-  large: 230,
+  small: 60,
+  medium: 90,
+  large: 150,
 }
 
 const SIGN_FONTS = [
@@ -46,7 +46,7 @@ export function SignatureDialog() {
   const [selectedFont, setSelectedFont] = useState<string>(SIGN_FONTS[0].name)
   const [uploadedSrc, setUploadedSrc] = useState<string | null>(null)
   const [hasDrawing, setHasDrawing] = useState(false)
-  const [stampSize, setStampSize] = useState<StampSize>('medium')
+  const [stampSize, setStampSize] = useState<StampSize>('small')
 
   const drawCanvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)

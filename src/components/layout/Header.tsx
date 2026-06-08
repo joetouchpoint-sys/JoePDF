@@ -24,6 +24,7 @@ export function Header() {
   const setIsExporting = useStore((s) => s.setIsExporting)
   const setIsDirty = useStore((s) => s.setIsDirty)
   const setRasterisedPage = useStore((s) => s.setRasterisedPage)
+  const clearRasterisedPage = useStore((s) => s.clearRasterisedPage)
   const { undo, redo, canUndo, canRedo } = useHistory()
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [showRedactConfirm, setShowRedactConfirm] = useState(false)
@@ -68,16 +69,25 @@ export function Header() {
 
     setIsExporting(true)
     try {
-      if (applyRedactions) {
+      // Determine which pages currently have pending (un-applied) redaction boxes
+      const redactionsByPage = new Map<number, RedactAnnotation[]>()
+      for (const [pageIdx, anns] of annotations) {
+        const boxes = (anns as Annotation[]).filter(
+          (a): a is RedactAnnotation => a.type === 'redact' && !a.applied,
+        )
+        if (boxes.length > 0) redactionsByPage.set(pageIdx, boxes)
+      }
+
+      // Drop any previously-rasterised page whose redaction boxes have since been
+      // removed/undone — otherwise the stale (still-redacted) image would keep being
+      // exported even after the user removed the redaction from that page.
+      for (const pageIdx of pdf.rasterisedPages.keys()) {
+        if (!redactionsByPage.has(pageIdx)) clearRasterisedPage(pageIdx)
+      }
+
+      if (applyRedactions && redactionsByPage.size > 0) {
         const doc = getCachedDocument()
         if (doc) {
-          const redactionsByPage = new Map<number, RedactAnnotation[]>()
-          for (const [pageIdx, anns] of annotations) {
-            const boxes = (anns as Annotation[]).filter(
-              (a): a is RedactAnnotation => a.type === 'redact' && !a.applied,
-            )
-            if (boxes.length > 0) redactionsByPage.set(pageIdx, boxes)
-          }
           const results = await rasteriseRedactedPages(doc, redactionsByPage, pdf.pageOrder)
           for (const result of results) setRasterisedPage(result.pageIndex, result.pngBytes)
         }
@@ -122,14 +132,14 @@ export function Header() {
       }
 
       setIsDirty(false)
-      clearAutosaveDraft()
+      void clearAutosaveDraft()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Export failed.'
       showToast(msg, 'error')
     } finally {
       setIsExporting(false)
     }
-  }, [setIsExporting, setIsDirty, setRasterisedPage])
+  }, [setIsExporting, setIsDirty, setRasterisedPage, clearRasterisedPage])
 
   const handleExportClick = useCallback((saveToOneDrive = false) => {
     const redactCount = checkForPendingRedactions()
@@ -322,7 +332,14 @@ export function Header() {
       <ConfirmDialog
         open={showCloseConfirm}
         onClose={() => setShowCloseConfirm(false)}
-        onConfirm={() => { resetAllState(); setShowCloseConfirm(false) }}
+        onConfirm={() => {
+          setShowCloseConfirm(false)
+          // Await the draft deletion before tearing down state — otherwise the
+          // upload screen's autosave check can run before the IndexedDB record
+          // is gone and show a spurious "Unsaved work found" prompt for a close
+          // the user explicitly chose (not an accidental loss of work).
+          void clearAutosaveDraft().then(() => resetAllState())
+        }}
         title="Close document?"
         message="Any unsaved changes will be lost."
         confirmLabel="Close"

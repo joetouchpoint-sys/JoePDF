@@ -1,12 +1,24 @@
 /**
  * Secure redaction via canvas rasterisation.
  *
- * Security guarantee: the original page content stream is replaced entirely
- * with a PNG image. There is no selectable text, no hidden layer, and no
- * possibility of recovering redacted content by copy-paste or text extraction.
+ * Security guarantee: redacted pages are rendered fresh from the *original*
+ * source document (not the live annotated view) onto an offscreen canvas,
+ * opaque black boxes are painted directly onto those pixels, and the
+ * flattened result replaces the entire page as a PNG image — including its
+ * content stream, text layer, links, form-field widgets, and any /Thumb
+ * preview. Nothing from the original page object graph is copied into the
+ * export, so there is no selectable text, no OCR/structure-tree remnants, no
+ * hidden/Optional-Content layers, and no metadata path by which covered
+ * content could be recovered via copy-paste, text extraction, or raw-byte
+ * inspection.
  *
- * Trade-off: rasterised pages lose text searchability and increase file size.
- * Only pages that contain at least one redaction box are rasterised.
+ * Trade-off: rasterised pages lose text searchability, drop any other JoePDF
+ * annotations placed on that page, and increase file size. Only pages that
+ * currently have at least one redaction box are rasterised, and the result is
+ * always rebuilt from the clean original on every export — never layered on
+ * top of a previous redaction — so moving/resizing/removing a box can't leave
+ * stale exposed or over-redacted pixels behind (see handleExport's
+ * clearRasterisedPage cleanup in Header.tsx).
  */
 
 import type { PDFDocumentProxy } from './pdfRenderer'

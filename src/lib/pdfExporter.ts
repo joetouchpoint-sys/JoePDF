@@ -95,6 +95,7 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
   for (let logicalIdx = 0; logicalIdx < pageOrder.length; logicalIdx++) {
     const originalIdx = pageOrder[logicalIdx] ?? logicalIdx
     const rasterised = rasterisedPages.get(logicalIdx)
+    let outPage
 
     if (rasterised) {
       // Redacted page — replace with PNG image
@@ -103,15 +104,15 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
       const pageH = srcMeta?.height ?? 842
 
       const pngImage = await outDoc.embedPng(rasterised)
-      const newPage = outDoc.addPage([pageW, pageH])
-      newPage.drawImage(pngImage, { x: 0, y: 0, width: pageW, height: pageH })
+      outPage = outDoc.addPage([pageW, pageH])
+      outPage.drawImage(pngImage, { x: 0, y: 0, width: pageW, height: pageH })
     } else {
       // Normal page — copy from source and add annotations
       const [copiedPage] = await outDoc.copyPages(srcDoc, [originalIdx])
       if (!copiedPage) continue
       outDoc.addPage(copiedPage)
 
-      const outPage = outDoc.getPage(outDoc.getPageCount() - 1)
+      outPage = outDoc.getPage(outDoc.getPageCount() - 1)
       const annotations = annotationsByPage.get(logicalIdx) ?? []
       const nonRedact = annotations.filter((a) => a.type !== 'redact')
 
@@ -127,13 +128,13 @@ export async function exportPDF(input: ExportInput): Promise<Uint8Array> {
           dmSansFonts,
         })
       }
+    }
 
-      // Apply rotation
-      const rotation = pageRotations.get(logicalIdx)
-      if (rotation) {
-        const currentRotation = outPage.getRotation().angle
-        outPage.setRotation(degrees((currentRotation + rotation) % 360))
-      }
+    // Apply rotation — must happen for both rasterised and normal pages
+    const rotation = pageRotations.get(logicalIdx)
+    if (rotation) {
+      const currentRotation = outPage.getRotation().angle
+      outPage.setRotation(degrees((currentRotation + rotation) % 360))
     }
   }
 

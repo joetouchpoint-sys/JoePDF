@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useStore } from '@/store'
 import { Tool } from '@/types/tool'
+import { ZOOM_STEP, MIN_ZOOM, MAX_ZOOM } from '@/hooks/useZoom'
 
 export function useKeyboardShortcuts() {
   const { undo, redo, canUndo, canRedo } = useStore.getState()
@@ -52,6 +53,27 @@ export function useKeyboardShortcuts() {
       }
 
       if (!ctrl) {
+        // + / = — zoom in; - / _ — zoom out (also covers numpad +/-)
+        if (e.key === '+' || e.key === '=') {
+          const hasPDF = !!useStore.getState().pdf.pdfBytes
+          if (hasPDF) {
+            e.preventDefault()
+            const { ui, setZoom } = useStore.getState()
+            setZoom(Math.min(MAX_ZOOM, ui.zoom + ZOOM_STEP))
+          }
+          return
+        }
+
+        if (e.key === '-' || e.key === '_') {
+          const hasPDF = !!useStore.getState().pdf.pdfBytes
+          if (hasPDF) {
+            e.preventDefault()
+            const { ui, setZoom } = useStore.getState()
+            setZoom(Math.max(MIN_ZOOM, ui.zoom - ZOOM_STEP))
+          }
+          return
+        }
+
         // Q — toggle text-select mode
         if (e.key === 'q' || e.key === 'Q') {
           const { ui, setTextSelectMode } = useStore.getState()
@@ -120,6 +142,7 @@ export function useKeyboardShortcuts() {
           h: Tool.HIGHLIGHT, H: Tool.HIGHLIGHT,
           i: Tool.IMAGE, I: Tool.IMAGE,
           x: Tool.REDACT, X: Tool.REDACT,
+          d: Tool.FORM_FIELD, D: Tool.FORM_FIELD,
         }
         const tool = toolMap[e.key]
         if (tool) {

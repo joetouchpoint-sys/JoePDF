@@ -37,12 +37,17 @@ export function DrawingOptionsBar() {
       {(isShapeTool || isLineTool || isFreehand) && (
         <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
           <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Stroke</legend>
-          <HexColorInput
-            value={defaults.strokeNone ? '#cccccc' : defaults.strokeColor}
-            onChange={(hex) => setDefaults({ strokeColor: hex, strokeNone: false })}
-            disabled={defaults.strokeNone}
-            label="Stroke colour"
-          />
+          <div
+            onPointerDownCapture={() => {
+              if (defaults.strokeNone) setDefaults({ strokeColor: '#000000', strokeNone: false })
+            }}
+          >
+            <HexColorInput
+              value={defaults.strokeNone ? '#000000' : defaults.strokeColor}
+              onChange={(hex) => setDefaults({ strokeColor: hex, strokeNone: false })}
+              label="Stroke colour"
+            />
+          </div>
           <button
             type="button"
             onClick={() => setDefaults({ strokeNone: !defaults.strokeNone })}
@@ -63,12 +68,17 @@ export function DrawingOptionsBar() {
       {isShapeTool && (
         <fieldset className="flex items-center gap-1.5 border-0 p-0 m-0">
           <legend className="text-xs text-slate-500 float-left mr-1.5 leading-[24px]">Fill</legend>
-          <HexColorInput
-            value={defaults.fillColor ?? '#ffffff'}
-            onChange={(hex) => setDefaults({ fillColor: hex })}
-            disabled={defaults.fillColor === null}
-            label="Fill colour"
-          />
+          <div
+            onPointerDownCapture={() => {
+              if (defaults.fillColor === null) setDefaults({ fillColor: '#ffffff' })
+            }}
+          >
+            <HexColorInput
+              value={defaults.fillColor ?? '#ffffff'}
+              onChange={(hex) => setDefaults({ fillColor: hex })}
+              label="Fill colour"
+            />
+          </div>
           <button
             type="button"
             onClick={() => setDefaults({ fillColor: defaults.fillColor === null ? '#ffffff' : null })}
