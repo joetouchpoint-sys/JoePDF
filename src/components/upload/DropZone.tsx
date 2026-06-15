@@ -25,7 +25,18 @@ export function DropZone() {
         return
       }
 
-      const buffer = await file.arrayBuffer()
+      if (file.size === 0) {
+        setError('That file appears to be empty. This can happen when dragging an attachment directly from an email in Chrome — try saving the attachment to your computer first, then drag the saved file in.')
+        return
+      }
+
+      let buffer: ArrayBuffer
+      try {
+        buffer = await file.arrayBuffer()
+      } catch {
+        setError('Could not read this file. Please try again or save it to your computer first.')
+        return
+      }
 
       if (!isPdfBuffer(buffer)) {
         setError('This file does not appear to be a valid PDF.')

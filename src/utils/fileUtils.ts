@@ -2,6 +2,7 @@ const PDF_MAGIC = '%PDF'
 
 /** Check if an ArrayBuffer starts with the PDF magic bytes. */
 export function isPdfBuffer(buffer: ArrayBuffer): boolean {
+  if (buffer.byteLength < 4) return false
   const bytes = new Uint8Array(buffer, 0, 4)
   const magic = String.fromCharCode(...bytes)
   return magic === PDF_MAGIC
